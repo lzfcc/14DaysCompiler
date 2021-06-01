@@ -33,15 +33,10 @@ public class Lexer {
 	 *
 	 * @return 返回一个单词
 	 */
-	public Token read() {
-		try {
-			if (fillQueue(0)) {
-				return queue.remove(0);
-			}
-		} catch (Exception e) {
-			
+	public Token read() throws ParseException {
+		if (fillQueue(0)) {
+			return queue.remove(0);
 		}
-
 		return Token.EOF;
 	}
 
@@ -51,35 +46,30 @@ public class Lexer {
 	 * @param i 单词位置
 	 * @return 返回一个单词
 	 */
-	public Token peek(int i) {
+	public Token peek(int i) throws ParseException {
 		if (fillQueue(i)) {
 			return queue.get(i);
 		}
-
 		return Token.EOF;
 	}
 
-	private boolean fillQueue(int i) {
-		try {
-			while (i >= queue.size()) {
-				if (hasMore) {
-					readLine();
-				} else {
-					return false;
-				}
+	private boolean fillQueue(int i) throws ParseException {
+		while (i >= queue.size()) {
+			if (hasMore) {
+				readLine();
+			} else {
+				return false;
 			}
-		} catch (Exception e) {
-			
 		}
 		return true;
 	}
 
-	protected void readLine() throws Exception {
+	protected void readLine() throws ParseException {
 		String line;
 		try {
 			line = reader.readLine();
 		} catch (IOException e) {
-			throw new Exception(e);
+			throw new ParseException(e);
 		}
 
 		if (line == null) {
@@ -99,7 +89,7 @@ public class Lexer {
 				addToken(lineNo, matcher);
 				pos = matcher.end();
 			} else {
-				throw new Exception("bad token at line " + lineNo);
+				throw new ParseException("bad token at line " + lineNo);
 			}
 		}
 		queue.add(new IdToken(lineNo, Token.EOL));

@@ -5,8 +5,12 @@ export enum Type {
     identifier = 3,
 }
 
-export class Token {
-    public static EOF = new Token(-1)
+export abstract class Token {
+    public static EOF = new (class EOFToken extends Token {
+        public getText(): string {
+            return 'EOF'
+        }
+    })(-1)
 
     // 换行
     public static EOL = '\n'
@@ -17,7 +21,7 @@ export class Token {
         this.lineNumber = lineNumber
     }
 
-    get type(): Type {
+    public getType(): Type {
         return Type.unknown
     }
 
@@ -30,6 +34,10 @@ export class Token {
     public getText(): string {
         return ''
     }
+
+    public getLineNumber() {
+        return this.lineNumber
+    }
 }
 
 export class NumToken extends Token {
@@ -40,7 +48,7 @@ export class NumToken extends Token {
         this.value = value
     }
 
-    public get type() {
+    public getType() {
         return Type.number
     }
 
@@ -61,11 +69,14 @@ export class IdToken extends Token {
         this.name = name
     }
 
-    public get type() {
+    public getType() {
         return Type.identifier
     }
 
     public getText() {
+        if (this.name === Token.EOL) {
+            return 'EOL'
+        }
         return this.name
     }
 }
@@ -78,7 +89,7 @@ export class StrToken extends Token {
         this.value = value
     }
 
-    public get type() {
+    public getType() {
         return Type.string
     }
 

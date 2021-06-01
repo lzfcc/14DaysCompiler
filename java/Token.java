@@ -9,6 +9,7 @@ public abstract class Token {
 			return "EOF";
 		}
 	};
+	// 抽象类不能实例化。上面这种格式（new ClassName(){要重写的方法}）叫匿名内部类，实际上是实例化一个它的子类。
 
 	// 换行
 	public static final String EOL = "\\n";
@@ -37,8 +38,8 @@ public abstract class Token {
 	}
 
 	// 数字字面量
-	public int getNumber() throws Exception {
-		throw new Exception("not number token");
+	public int getNumber() {
+		throw new StoneException("not number token");
 	}
 
 	// 节点文本

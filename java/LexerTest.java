@@ -4,7 +4,7 @@ import java.io.StringReader;
 public class LexerTest extends BasicTest {
 
 //	@Test
-	public void test_lexer() {
+	public void test_lexer() throws ParseException {
 		StringReader stringReader = new StringReader(lexer);
 		Lexer lexer = new Lexer(stringReader);
 
@@ -19,8 +19,11 @@ public class LexerTest extends BasicTest {
 		System.out.println(args); //[ljava.lang.string;@139a55  “[”代表数组， “l”代表long , "@139a55"代表哈希值
 		System.out.println(args.length);  //默认长度为0
 		
-		
-		LexerTest test = new LexerTest();
-		test.test_lexer();		
+		try {
+			LexerTest test = new LexerTest();
+			test.test_lexer();	
+		} catch (ParseException e) {
+			
+		} 
 	} 
 }
