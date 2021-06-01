@@ -1,6 +1,6 @@
-import { Type, Token } from '../Token'
-import Lexer from '../Lexer'
-import { ParseError } from '../Error'
+import { Type, Token } from './Token'
+import Lexer from './Lexer'
+import { ParseError } from './Error'
 
 export abstract class ASTree {
     protected _children: Array<ASTree>
@@ -120,7 +120,7 @@ export class ASTLeaf extends ASTree {
 /**
  * 双目操作符
  */
-class BinaryExpr extends ASTList {
+export class BinaryExpr extends ASTList {
     constructor(children: Array<ASTree>) {
         super(children)
     }
@@ -257,7 +257,7 @@ class BinaryExpr extends ASTList {
     // }
 }
 
-class NumberLiteral extends ASTLeaf {
+export class NumberLiteral extends ASTLeaf {
     constructor(t: Token) {
         super(t)
     }
@@ -266,69 +266,11 @@ class NumberLiteral extends ASTLeaf {
     }
 }
 
-class Name extends ASTLeaf {
+export class Name extends ASTLeaf {
     constructor(t: Token) {
         super(t)
     }
     public name() {
         return this.token().getText()
-    }
-}
-
-export class ExprParser {
-    private lexer: Lexer
-
-    constructor(lexer: Lexer) {
-        this.lexer = lexer
-    }
-
-    public expression() {
-        let left = this.term()
-        while (this.isToken('+') || this.isToken('-')) {
-            const op = new ASTLeaf(this.token())
-            const right = this.term()
-            left = new BinaryExpr([left, op, right])
-        }
-        return left
-    }
-
-    public term() {
-        let left = this.factor()
-        while (this.isToken('*') || this.isToken('/')) {
-            const op = new ASTLeaf(this.token())
-            const right = this.factor()
-            left = new BinaryExpr([left, op, right])
-        }
-        return left
-    }
-
-    public factor() {
-        if (this.isToken('(')) {
-            this.token('(')
-            const e = this.expression()
-            this.token(')')
-            return e
-        } else {
-            const t = this.token()
-            if (t.getType() == Type.number) {
-                const n = new NumberLiteral(t)
-                return n
-            } else {
-                throw new ParseError(t)
-            }
-        }
-    }
-
-    private token(name?: string) {
-        const t = this.lexer.read()
-        if (name && !(t.getType() == Type.identifier && name === t.getText())) {
-            throw new ParseError(t)
-        }
-        return t
-    }
-
-    private isToken(name: string) {
-        const t = this.lexer.peek(0)
-        return t.getType() == Type.identifier && name === t.getText()
     }
 }
