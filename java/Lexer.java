@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.StringReader;
 
 /**
  * 词法分析器
@@ -199,5 +200,23 @@ public class Lexer {
 			return "StringToken";
 		}
 	}
+	
+	public static void main(String[] args)
+	{
+		System.out.println(args); //[ljava.lang.string;@139a55  “[”代表数组， “l”代表long , "@139a55"代表哈希值
+		System.out.println(args.length);  //默认长度为0
+		
+		try {
+			LexerTest test = new LexerTest();
+			StringReader stringReader = new StringReader(BasicTest.lexer);
+			Lexer lexer = new Lexer(stringReader);
+
+			for (Token token; (token = lexer.read()) != Token.EOF;) {
+				System.out.println(token.name() + " => " + token.getText());
+			}
+		} catch (ParseException e) {
+			
+		} 
+	} 
 
 }

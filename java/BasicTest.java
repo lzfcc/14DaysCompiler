@@ -2,30 +2,30 @@
 
 public class BasicTest {
 
-	protected String lexer =
-			"str = \"123\"" +
-			"even = 0\n" +
+	protected static String lexer =
+			"str = \"123\";" +
+			"even = 0;\n" +
 			"\n" +
-			"odd = 0\n" +
+			"odd = 0;\n" +
 			"\n" +
-			"i = 1\n" +
+			"i = 1;\n" +
 			"\n" +
 			"while i < 10 {\n" +
 			"        if i % 2 == 0 {\n" +
-			"            even = even + 1\n" +
+			"            even = even + 1;\n" +
 			"        } else {\n" +
-			"            odd = odd + 1\n" +
+			"            odd = odd + 1;\n" +
 			"        }\n" +
-			"        i = i + 1\n" +
+			"        i = i + 1;\n" +
 			"}\n" +
 			"\n" +
-			"even\n" +
+			"eve;\n" +
 			"\n" +
-			"odd\n" +
+			"odd;\n" +
 			"\n" +
-			"even + odd";
+			"even + odd;";
 
-	protected String func =
+	protected static String func =
 			"def fib(n) {\n" +
 			"        if n < 2 {\n" +
 			"                n\n" +
@@ -36,11 +36,11 @@ public class BasicTest {
 			"\n" +
 			"fib(10)";
 
-	protected String closure_func =
+	protected static String closure_func =
 			"inc = fun (x) { x + 1 }\n" +
 			"inc(3)";
 
-	protected String native_func =
+	protected static String native_func =
 			"def fib(n){\n" +
 			"        if n < 2 {\n" +
 			"                n\n" +
@@ -53,7 +53,7 @@ public class BasicTest {
 			"fib 15\n" +
 			"print currentTime() - t + \"ms\"";
 
-	protected String class_info =
+	protected static String class_info =
 			"class Position {\n" +
 			"        x = y = 0\n" +
 			"\n" +
@@ -69,7 +69,7 @@ public class BasicTest {
 			"print p.x + p.y";
 
 
-	protected String array =
+	protected static String array =
 			"a = [2, 3, 4]\n" +
 			"print a[1]\n" +
 			"\n" +
