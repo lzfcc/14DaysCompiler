@@ -1,39 +1,66 @@
 import { Token, Type } from './Token'
-import { ASTLeaf, ASTList, ASTree } from './ASTree'
+import {
+    ASTLeaf,
+    ASTList,
+    ASTree,
+    PrimaryExpr,
+    BlockStmnt,
+    IfStmnt,
+    WhileStmnt,
+    NullStmnt,
+    NumberLiteral,
+    StringLiteral,
+    Name,
+    NegativeExpr,
+    BinaryExpr,
+} from './ASTree'
 import Lexer from './Lexer'
 import { ParseError } from './Error'
 
+const makeFactory = (Cls: { new(...arg: any): any }, Arg?) => {
+    return (arg: any) => {
+        if (typeof Cls['create'] === 'function') {
+            return Cls['create'](arg)
+        } else {
+            return new Cls(arg)
+        }
+        if (Array.isArray(arg)) {
+            return arg.length == 1 ? arg[0] : new ASTList(arg)
+        }
+    }
+}
+
 abstract class Element {
-    protected abstract parse(lexer: Lexer, list: Array<ASTree>)
-    protected abstract match(lexer: Lexer): boolean
+    public abstract parse(lexer: Lexer, list: Array<ASTree>)
+    public abstract match(lexer: Lexer): boolean
 }
 
 class Tree extends Element {
-    protected parser: Parser
+    public parser: Parser
 
     constructor(parser: Parser) {
         super()
         this.parser = parser
     }
 
-    protected parse(lexer: Lexer, list: Array<ASTree>) {
+    public parse(lexer: Lexer, list: Array<ASTree>) {
         list.push(this.parser.parse(lexer))
     }
 
-    protected match(lexer: Lexer): boolean {
+    public match(lexer: Lexer): boolean {
         return this.parser.match(lexer)
     }
 }
 
 class OrTree extends Element {
-    protected parsers: Parser[]
+    public parsers: Parser[]
 
     constructor(parsers: Parser[]) {
         super()
         this.parsers = parsers
     }
 
-    protected parse(lexer: Lexer, list: Array<ASTree>) {
+    public parse(lexer: Lexer, list: Array<ASTree>) {
         const p = this.choose(lexer)
         if (p) {
             list.push(p.parse(lexer))
@@ -42,8 +69,8 @@ class OrTree extends Element {
         }
     }
 
-    protected match(lexer: Lexer): boolean {
-        return this.choose(lexer)
+    public match(lexer: Lexer): boolean {
+        return this.choose(lexer) != null
     }
 
     protected choose(lexer: Lexer): Parser {
@@ -55,13 +82,13 @@ class OrTree extends Element {
         return null
     }
 
-    protected insert(parser: Parser) {
+    public insert(parser: Parser) {
         this.parsers.push(parser)
     }
 }
 
 class Repeat extends Element {
-    protected parser: Parser
+    public parser: Parser
     protected onlyOnce: boolean
 
     constructor(parser: Parser, once: boolean) {
@@ -70,7 +97,7 @@ class Repeat extends Element {
         this.onlyOnce = once
     }
 
-    protected parse(lexer: Lexer, list: Array<ASTree>) {
+    public parse(lexer: Lexer, list: Array<ASTree>) {
         while (this.parser.match(lexer)) {
             const t = this.parser.parse(lexer)
             if (!(t instanceof ASTList) || t.numChildren() > 0) {
@@ -82,33 +109,33 @@ class Repeat extends Element {
         }
     }
 
-    protected match(lexer: Lexer): boolean {
+    public match(lexer: Lexer): boolean {
         return this.parser.match(lexer)
     }
 }
 
 abstract class ATokenElem extends Element {
-    protected factory: Factory
-
-    constructor(type) {
+    protected make
+    constructor(type: any) {
         super()
         if (!type) {
             type = ASTLeaf
         }
-        this.factory = Factory.get(type, Token)
+        // this.factory = Factory.get(type, Token)
+        this.make = makeFactory(type, Token)
     }
 
-    protected parse(lexer: Lexer, list: Array<ASTree>) {
+    public parse(lexer: Lexer, list: Array<ASTree>) {
         const t = lexer.read()
         if (this.test(t)) {
-            const leaf = this.factory.make(t)
+            const leaf = this.make(t)
             list.push(leaf)
         } else {
             throw new ParseError(t)
         }
     }
 
-    protected match(lexer: Lexer) {
+    public match(lexer: Lexer) {
         return this.test(lexer.peek(0))
     }
 
@@ -149,7 +176,7 @@ class Leaf extends Element {
         this.tokens = tokens
     }
 
-    protected parse(lexer: Lexer, list: Array<ASTree>) {
+    public parse(lexer: Lexer, list: Array<ASTree>) {
         const t = lexer.read()
         if (t.getType() == Type.identifier) {
             for (const token of this.tokens) {
@@ -170,7 +197,7 @@ class Leaf extends Element {
         list.push(new ASTLeaf(t))
     }
 
-    protected match(lexer: Lexer): boolean {
+    public match(lexer: Lexer): boolean {
         const t = lexer.peek(0)
         if (t.getType() == Type.identifier) {
             for (const token of this.tokens) {
@@ -187,19 +214,23 @@ class Skip extends Leaf {
     protected find(list: Array<ASTree>, t: Token) {}
 }
 
-interface Precedence {
+class Precedence {
     leftAssociative: boolean
     value: number
+    constructor(value = 0, leftAssociative = true) {
+        this.value = value
+        this.leftAssociative = leftAssociative
+    }
 }
 
 class Expr extends Element {
-    protected factory: Factory
-    protected ops: Object
+    protected make
+    protected ops: { [operator: string]: Precedence }
     protected factor: Parser
 
     constructor(cls, exp, ops) {
         super()
-        this.factory = Factory.getForASTList(cls)
+        this.make = makeFactory(cls) // Factory.getForASTList(cls)
         this.ops = ops
         this.factor = exp
     }
@@ -226,7 +257,7 @@ class Expr extends Element {
             right = this.doShift(lexer, right, next)
         }
         list.push(right)
-        return this.factory.make(list)
+        return this.make(list)
     }
 
     private nextOperator(lexer: Lexer): Precedence {
@@ -246,7 +277,7 @@ class Expr extends Element {
         }
     }
 
-    protected match(lexer: Lexer): boolean {
+    public match(lexer: Lexer): boolean {
         return this.factor.match(lexer)
     }
 }
@@ -270,7 +301,7 @@ class Parser {
         return res[0] // ???
     }
 
-    protected match(lexer: Lexer) {
+    public match(lexer: Lexer) {
         if (this.elements.length) {
             return this.elements[0].match(lexer)
         } else {
@@ -278,7 +309,7 @@ class Parser {
         }
     }
 
-    public rule(cls = null): Parser {
+    public static rule(cls = null): Parser {
         return new Parser(cls)
     }
 
@@ -292,8 +323,8 @@ class Parser {
         return this
     }
 
-    public identifier(cls = null): Parser {
-        this.elements.push(new IdTokenElem(cls))
+    public identifier(cls = null, reserved = []): Parser {
+        this.elements.push(new IdTokenElem(cls, reserved))
         return this
     }
 
@@ -325,12 +356,17 @@ class Parser {
     public maybe(p: Parser): Parser {
         const p2 = new Parser(p)
         p2.reset()
-        this.elements.push(new OrTree(p, p2))
+        this.elements.push(new OrTree([p, p2]))
         return this
     }
 
     public option(p: Parser): Parser {
         this.elements.push(new Repeat(p, true))
+        return this
+    }
+
+    public repeat(p: Parser): Parser {
+        this.elements.push(new Repeat(p, false))
         return this
     }
 
@@ -342,11 +378,66 @@ class Parser {
     public insertChoice(p: Parser): Parser {
         const e = this.elements[0]
         if (e instanceof OrTree) {
-            (e as OrTree).insert(p)
+            ;(e as OrTree).insert(p)
         } else {
+            const copy = new Parser(this)
             this.reset()
             this.or(p, copy)
         }
         return this
     }
 }
+
+const reserved = [';', '}', Token.EOL]
+const operators = {
+    '=': new Precedence(1, false),
+    '==': new Precedence(2),
+    '<': new Precedence(2),
+    '>': new Precedence(2),
+    '+': new Precedence(3),
+    '-': new Precedence(3),
+    '*': new Precedence(4),
+    '/': new Precedence(4),
+    '%': new Precedence(4),
+}
+const expr0 = Parser.rule()
+const primary = Parser.rule(PrimaryExpr).or(
+    Parser.rule().sep('(').ast(expr0).sep(')'),
+    Parser.rule().number(NumberLiteral),
+    Parser.rule().identifier(Name, reserved),
+    Parser.rule().string(StringLiteral)
+)
+const factor = Parser.rule().or(
+    Parser.rule(NegativeExpr).sep('-').ast(primary),
+    primary
+)
+const expr = expr0.expression(BinaryExpr, factor, operators)
+
+const statement0 = Parser.rule()
+const block = Parser.rule(BlockStmnt)
+    .sep('{')
+    .option(statement0)
+    .repeat(Parser.rule().sep(';', Token.EOL).option(statement0))
+    .sep('}')
+const simple = Parser.rule(PrimaryExpr).ast(expr) // ???
+const statement = statement0.or(
+    Parser.rule(IfStmnt)
+        .sep('if')
+        .ast(expr)
+        .ast(block)
+        .option(Parser.rule().sep('else').ast(block)),
+    Parser.rule(WhileStmnt).sep('while').ast(expr).ast(block),
+    simple
+)
+
+const program = Parser.rule()
+    .or(statement, Parser.rule(NullStmnt))
+    .sep(';', Token.EOL)
+
+const lexer = new Lexer('./test-lexer.txt')
+lexer.process().then(() => {
+    while (lexer.peek(0) != Token.EOF) {
+        const ast = program.parse(lexer)
+        console.log('=> ' + ast.toString())
+    }
+})

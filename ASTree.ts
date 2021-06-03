@@ -258,19 +258,65 @@ export class BinaryExpr extends ASTList {
 }
 
 export class NumberLiteral extends ASTLeaf {
-    constructor(t: Token) {
-        super(t)
-    }
     public value(): number {
         return this.token().getNumber()
     }
 }
 
-export class Name extends ASTLeaf {
-    constructor(t: Token) {
-        super(t)
+export class StringLiteral extends ASTLeaf {
+    public value(): string {
+        return this.token().getText()
     }
+}
+
+export class Name extends ASTLeaf {
     public name() {
         return this.token().getText()
+    }
+}
+
+export class WhileStmnt extends ASTList {
+    public condition(): ASTree {
+        return this.child(0)
+    }
+    public body(): ASTree {
+        return this.child(1)
+    }
+    public toString() {
+        return `(while ${this.condition()} ${this.body()})`
+    }
+}
+
+export class BlockStmnt extends ASTList {}
+
+export class NullStmnt extends ASTList {}
+
+export class IfStmnt extends ASTList {
+    public condition(): ASTree {
+        return this.child(0)
+    }
+    public thenBlock(): ASTree {
+        return this.child(1)
+    }
+    public elseBlock(): ASTree {
+        return this.numChildren() > 2 ? this.child(2) : null
+    }
+    public toString() {
+        return `(if${this.condition()} ${this.thenBlock()} else ${this.elseBlock()})`
+    }
+}
+
+export class PrimaryExpr extends ASTList {
+    public static create(list: Array<ASTree>): ASTree {
+        return list.length == 1 ? list[0] : new PrimaryExpr(list)
+    }
+}
+
+export class NegativeExpr extends ASTList {
+    public operand(): ASTree {
+        return this.child(0)
+    }
+    public toString() {
+        return '-' + this.operand()
     }
 }

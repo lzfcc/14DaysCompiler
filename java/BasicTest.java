@@ -3,27 +3,38 @@
 public class BasicTest {
 
 	protected static String lexer =
-			"str = \"123\";" +
-			"even = 0;\n" +
-			"\n" +
-			"odd = 0;\n" +
-			"\n" +
-			"i = 1;\n" +
-			"\n" +
-			"while i < 10 {\n" +
-			"        if i % 2 == 0 {\n" +
-			"            even = even + 1;\n" +
-			"        } else {\n" +
-			"            odd = odd + 1;\n" +
-			"        }\n" +
-			"        i = i + 1;\n" +
-			"}\n" +
-			"\n" +
-			"eve;\n" +
-			"\n" +
-			"odd;\n" +
-			"\n" +
-			"even + odd;";
+	
+	"while i < 10 {\n" +
+	"        if i % 2 == 0 {\n" +
+	"            even = even + 1;\n" +
+	"        } else {\n" +
+	"            odd = odd + 1;\n" +
+	"        }\n" +
+	"        i = i + 1;\n" +
+	"}";
+	
+	
+//			"str = \"123\";" +
+//			"even = 0;\n" +
+//			"\n" +
+//			"odd = 0;\n" +
+//			"\n" +
+//			"i = 1;\n" +
+//			"\n" +
+//			"while i < 10 {\n" +
+//			"        if i % 2 == 0 {\n" +
+//			"            even = even + 1;\n" +
+//			"        } else {\n" +
+//			"            odd = odd + 1;\n" +
+//			"        }\n" +
+//			"        i = i + 1;\n" +
+//			"}\n" +
+//			"\n" +
+//			"eve;\n" +
+//			"\n" +
+//			"odd;\n" +
+//			"\n" +
+//			"even + odd;";
 
 	protected static String func =
 			"def fib(n) {\n" +
