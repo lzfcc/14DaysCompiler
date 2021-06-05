@@ -151,7 +151,7 @@ class IdTokenElem extends ATokenElem {
     protected test(t: Token): boolean {
         return (
             t.getType() == Type.identifier &&
-            !this.reserved.includes(t.getText())
+            this.reserved.indexOf(t.getText()) >= 0
         )
     }
 }
