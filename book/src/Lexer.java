@@ -207,7 +207,6 @@ public class Lexer {
 		System.out.println(args.length);  //默认长度为0
 		
 		try {
-			LexerTest test = new LexerTest();
 			StringReader stringReader = new StringReader(BasicTest.lexer);
 			Lexer lexer = new Lexer(stringReader);
 
