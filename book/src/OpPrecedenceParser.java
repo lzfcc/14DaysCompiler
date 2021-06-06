@@ -79,10 +79,10 @@ public class OpPrecedenceParser {
         Token t = lexer.peek(0);
         return t.isIdentifier() && name.equals(t.getText());
     }
-    public static void main(String[] args) throws ParseException {
-        Lexer lexer = new Lexer(new CodeDialog());
-        OpPrecedenceParser p = new OpPrecedenceParser(lexer);
-        ASTree t = p.expression();
-        System.out.println("=> " + t);
-    }
+//    public static void main(String[] args) throws ParseException {
+//        Lexer lexer = new Lexer(new CodeDialog());
+//        OpPrecedenceParser p = new OpPrecedenceParser(lexer);
+//        ASTree t = p.expression();
+//        System.out.println("=> " + t);
+//    }
 }

@@ -6,15 +6,14 @@
     "configurations": [
         {
             "name": "Debug TS File",
-            "type": "pwa-node",
+            "type": "node",
             "request": "launch",
             "args": [
                 "${relativeFile}"
             ],
             "trace": true,
             "cwd": "${workspaceRoot}",
-            "runtimeArgs": ["-r", "ts-node/register"],
-            "protocol": "inspector"
+            "runtimeArgs": ["-r", "ts-node/register"]
         }
     ]
 }
