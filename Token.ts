@@ -74,9 +74,10 @@ export class IdToken extends Token {
     }
 
     public getText() {
-        if (this.name === Token.EOL) {
-            return 'EOL'
-        }
+        // 这里不能做特殊定制，因为在和保留字列表比较时会用到
+        // if (this.name === Token.EOL) {
+        //     return 'EOL'
+        // }
         return this.name
     }
 }

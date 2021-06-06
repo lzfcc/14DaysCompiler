@@ -19,14 +19,17 @@ import { ParseError } from './Error'
 
 const makeFactory = (Cls: { new(...arg: any): any }, Arg?) => {
     return (arg: any) => {
-        if (typeof Cls['create'] === 'function') {
-            return Cls['create'](arg)
-        } else {
-            return new Cls(arg)
+        if (typeof Cls === 'function') { // a class
+            if (typeof Cls['create'] === 'function') {
+                return Cls['create'](arg)
+            } else {
+                return new Cls(arg)
+            }
         }
         if (Array.isArray(arg)) {
             return arg.length == 1 ? arg[0] : new ASTList(arg)
         }
+        throw Error('factory error')
     }
 }
 
@@ -151,7 +154,7 @@ class IdTokenElem extends ATokenElem {
     protected test(t: Token): boolean {
         return (
             t.getType() == Type.identifier &&
-            this.reserved.indexOf(t.getText()) >= 0
+            this.reserved.indexOf(t.getText()) < 0 // !this.reserved.includes(...)
         )
     }
 }
@@ -284,10 +287,12 @@ class Expr extends Element {
 
 class Parser {
     protected elements: Element[]
+    protected make: Function
 
     constructor(arg = null) {
         if (arg instanceof Parser) {
             this.elements = arg.elements
+            this.make = arg.make
         } else {
             this.reset(arg)
         }
@@ -298,7 +303,7 @@ class Parser {
         for (const e of this.elements) {
             e.parse(lexer, res)
         }
-        return res[0] // ???
+        return this.make(res)
     }
 
     public match(lexer: Lexer) {
@@ -313,8 +318,9 @@ class Parser {
         return new Parser(cls)
     }
 
-    public reset(cls = null): Parser {
+    public reset(Cls?): Parser {
         this.elements = []
+        this.make = makeFactory(Cls)
         return this
     }
 
@@ -392,8 +398,11 @@ const reserved = [';', '}', Token.EOL]
 const operators = {
     '=': new Precedence(1, false),
     '==': new Precedence(2),
+    '!=': new Precedence(2),
     '<': new Precedence(2),
+    '<=': new Precedence(2),
     '>': new Precedence(2),
+    '>=': new Precedence(2),
     '+': new Precedence(3),
     '-': new Precedence(3),
     '*': new Precedence(4),
