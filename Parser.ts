@@ -17,13 +17,71 @@ import {
 import Lexer from './Lexer'
 import { ParseError } from './Error'
 
-const makeFactory = (Cls: { new(...arg: any): any }, Arg?) => {
+
+/*
+Java implementation:
+protected static abstract class Factory {
+        protected abstract ASTree make0(Object arg) throws Exception;
+        protected ASTree make(Object arg) {
+            try {
+                return make0(arg);
+            } catch (IllegalArgumentException e1) {
+                throw e1;
+            } catch (Exception e2) {
+                throw new RuntimeException(e2); // this compiler is broken.
+            }
+        }
+        protected static Factory getForASTList(Class<? extends ASTree> clazz) {
+            Factory f = get(clazz, List.class);
+            if (f == null)
+                f = new Factory() {
+                    protected ASTree make0(Object arg) throws Exception {
+                        List<ASTree> results = (List<ASTree>)arg;
+                        if (results.size() == 1)
+                            return results.get(0);
+                        else
+                            return new ASTList(results);
+                    }
+                };
+            return f;
+        }
+        protected static Factory get(Class<? extends ASTree> clazz,
+                                     Class<?> argType)
+        {
+            if (clazz == null)
+                return null;
+            try {
+                final Method m = clazz.getMethod("create",
+                                                 new Class<?>[] { argType });
+                return new Factory() {
+                    protected ASTree make0(Object arg) throws Exception {
+                        return (ASTree)m.invoke(null, arg);
+                    }
+                };
+            } catch (NoSuchMethodException e) {}
+            try {
+                // Find the constructor of class `clazz`, the classes of the parameters should be specified in `argType`
+                final Constructor<? extends ASTree> c
+                    = clazz.getConstructor(argType);
+                return new Factory() {
+                    protected ASTree make0(Object arg) throws Exception {
+                        return c.newInstance(arg);
+                    }
+                };
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+*/
+
+const makeFactory = (cls: { new(...arg: any): any }) => {
     return (arg: any) => {
-        if (typeof Cls === 'function') { // a class
-            if (typeof Cls['create'] === 'function') {
-                return Cls['create'](arg)
+        if (typeof cls === 'function') { // a class
+            if (typeof cls['create'] === 'function') {
+                return cls['create'](arg)
             } else {
-                return new Cls(arg)
+                return new cls(arg)
             }
         }
         if (Array.isArray(arg)) {
@@ -124,8 +182,7 @@ abstract class ATokenElem extends Element {
         if (!type) {
             type = ASTLeaf
         }
-        // this.factory = Factory.get(type, Token)
-        this.make = makeFactory(type, Token)
+        this.make = makeFactory(type) // this.factory = Factory.get(type, Token), in JavaScript no need to specify the type of constructor parameter class(Token)
     }
 
     public parse(lexer: Lexer, list: Array<ASTree>) {
@@ -318,9 +375,9 @@ class Parser {
         return new Parser(cls)
     }
 
-    public reset(Cls?): Parser {
+    public reset(cls?): Parser {
         this.elements = []
-        this.make = makeFactory(Cls)
+        this.make = makeFactory(cls)
         return this
     }
 
@@ -428,7 +485,7 @@ const block = Parser.rule(BlockStmnt)
     .option(statement0)
     .repeat(Parser.rule().sep(';', Token.EOL).option(statement0))
     .sep('}')
-const simple = Parser.rule(PrimaryExpr).ast(expr) // ???
+const simple = Parser.rule(PrimaryExpr).ast(expr)
 const statement = statement0.or(
     Parser.rule(IfStmnt)
         .sep('if')
