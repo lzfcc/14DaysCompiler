@@ -62,18 +62,21 @@ protected static abstract class Factory {
 
 export const makeFactory = (cls: { new (...arg: any): any }) => {
     return (arg: any) => {
-        if (typeof cls === 'function') {
-            // a class
-            if (typeof cls['create'] === 'function') {
-                return cls['create'](arg)
-            } else {
-                return new cls(arg)
+        try {
+            if (typeof cls === 'function') {
+                // a class
+                if (typeof cls['create'] === 'function') {
+                    return cls['create'](arg)
+                } else {
+                    return new cls(arg)
+                }
             }
+            if (Array.isArray(arg)) {
+                return arg.length == 1 ? arg[0] : new ASTList(arg)
+            }
+        } catch (e) {
+            throw Error('factory error: ' + JSON.stringify(e))
         }
-        if (Array.isArray(arg)) {
-            return arg.length == 1 ? arg[0] : new ASTList(arg)
-        }
-        throw Error('factory error')
     }
 }
 
@@ -129,8 +132,12 @@ export class OrTree extends Element {
         return null
     }
 
+    /**
+     * insert a new parser into the first place of the parsers
+     * @param parser
+     */
     public insert(parser: Parser) {
-        this.parsers.push(parser)
+        this.parsers.unshift(parser)
     }
 }
 
@@ -331,11 +338,17 @@ export class Expr extends Element {
 export class Parser {
     protected elements: Element[]
     protected make: Function
+    /**
+     * for ease of debugging, add a name property, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+     * @protected
+     */
+    protected name: string = ''
 
     constructor(arg = null) {
         if (arg instanceof Parser) {
             this.elements = arg.elements
             this.make = arg.make
+            this.name = arg.name
         } else {
             this.reset(arg)
         }
@@ -358,12 +371,20 @@ export class Parser {
     }
 
     public static rule(cls = null): Parser {
-        return new Parser(cls)
+        if (typeof cls === 'function') {
+            return new Parser(cls)
+        }
+        const parser = new Parser()
+        if (typeof cls === 'string') {
+            parser.name = cls
+        }
+        return parser
     }
 
     public reset(cls?): Parser {
         this.elements = []
         this.make = makeFactory(cls)
+        this.name = cls?.name || '' // constructor name
         return this
     }
 
@@ -373,6 +394,10 @@ export class Parser {
     }
 
     public identifier(cls = null, reserved = []): Parser {
+        if (Array.isArray(cls)) {
+            reserved = cls
+            cls = null
+        }
         this.elements.push(new IdTokenElem(cls, reserved))
         return this
     }

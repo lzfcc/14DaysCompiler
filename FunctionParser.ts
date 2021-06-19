@@ -6,7 +6,7 @@ import { NestedEnv } from './Environment'
 import { Token } from './Token'
 
 export default class FunctionParser extends BasicParser {
-    param = Parser.rule().identifier(this.reserved)
+    param = Parser.rule('param').identifier(this.reserved)
     params = Parser.rule(ParameterList)
         .ast(this.param)
         .repeat(Parser.rule().sep(',').ast(this.param))
@@ -19,14 +19,14 @@ export default class FunctionParser extends BasicParser {
     args = Parser.rule(Arguments)
         .ast(this.expr)
         .repeat(Parser.rule().sep(',').ast(this.expr))
-    postfix = Parser.rule().sep('(').maybe(this.args).sep(')')
+    postfix = Parser.rule('postfix').sep('(').maybe(this.args).sep(')')
 
     constructor() {
         super()
         this.reserved.push(')')
         this.primary.repeat(this.postfix)
         this.simple.option(this.args)
-        this.program.insertChoice(this.def)
+        this.program.insertChoice(this.def) // <=> program = rule().or(def, statement, rule(NullStmt)).sep(',', EOL)
     }
 }
 

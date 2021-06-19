@@ -40,7 +40,7 @@ export default class BasicParser {
         Parser.rule().identifier(Name, this.reserved),
         Parser.rule().string(StringLiteral)
     )
-    factor = Parser.rule().or(
+    factor = Parser.rule('factor').or(
         Parser.rule(NegativeExpr).sep('-').ast(this.primary),
         this.primary
     )
@@ -63,7 +63,7 @@ export default class BasicParser {
         this.simple
     )
 
-    program = Parser.rule()
+    program = Parser.rule('program')
         .or(this.statement, Parser.rule(NullStmnt))
         .sep(';', Token.EOL)
 
