@@ -1,5 +1,6 @@
 import { Type, Token } from './Token'
-import { Environment } from './Environment'
+import { Environment, NestedEnv } from './Environment'
+import { StoneFunction } from './StoneFunction'
 
 export abstract class ASTree {
     protected _children: Array<ASTree>
@@ -60,7 +61,7 @@ export class ASTList extends ASTree {
         return null
     }
 
-    public eval(env) {
+    public eval(env: Environment): any {
         throw new Error('cannot eval: ' + this.toString())
     }
 
@@ -96,7 +97,7 @@ export class ASTLeaf extends ASTree {
     }
 
     public location(): string {
-        return 'at line ' + this._token.getLineNumber()
+        return 'at line ' + this._token.lineNumber
     }
 
     public children(): Array<ASTree> {
@@ -163,7 +164,7 @@ export class BinaryExpr extends ASTList {
     }
 
     protected computeAssign(env, rvalue) {
-        const left = this.left() as Name
+        const left = this.left()
         try {
             if (left instanceof Name) {
                 //((Name)left).evalForAssign(env, rvalue);
@@ -370,6 +371,22 @@ export class PrimaryExpr extends ASTList {
     public static create(list: Array<ASTree>): ASTree {
         return list.length == 1 ? list[0] : new PrimaryExpr(list)
     }
+    operand() {
+        return this.child(0)
+    }
+    postfix(k: number) {
+        return this.child(this.numChildren() - k - 1)
+    }
+    hasPostfix(k: number): boolean {
+        return this.numChildren() - k > 1
+    }
+    eval(env: Environment, k: number = 0) {
+        if (this.hasPostfix(k)) {
+            const target = this.eval(env, k + 1)
+            return (this.postfix(k) as Postfix).eval(env, target)
+        }
+        return this.operand().eval(env)
+    }
 }
 
 export class NegativeExpr extends ASTList {
@@ -385,5 +402,64 @@ export class NegativeExpr extends ASTList {
             return -value
         }
         throw new Error('bad type for -' + this)
+    }
+}
+
+export class ParameterList extends ASTList {
+    name(i: number): string {
+        return (this.child(i) as ASTLeaf)?.token().getText()
+    }
+    size() {
+        return this.numChildren()
+    }
+    eval(env: NestedEnv, index: number = 0, value: any = undefined) {
+        env.put(this.name(index), value, true)
+    }
+}
+
+export class DefStmnt extends ASTList {
+    name(): string {
+        return (this.child(0) as ASTLeaf)?.token().getText()
+    }
+    parameters(): ParameterList {
+        return this.child(1) as ParameterList
+    }
+    body(): BlockStmnt {
+        return this.child(2) as BlockStmnt
+    }
+    toString(): string {
+        return `(def ${this.name()} ${this.parameters()} ${this.body()})`
+    }
+    eval(env: Environment) {
+        env.put(
+            this.name(),
+            new StoneFunction(this.parameters(), this.body(), env)
+        )
+    }
+}
+
+export class Postfix extends ASTList {
+    eval(env: Environment, value: any = undefined): any {
+        return super.eval(env)
+    }
+}
+export class Arguments extends Postfix {
+    size() {
+        return this.numChildren()
+    }
+    eval(callerEnv: Environment, func: StoneFunction) {
+        if (!(func instanceof StoneFunction)) {
+            throw new TypeError('bad function')
+        }
+        const params = func.parameters
+        if (this.size() !== params.size()) {
+            throw new Error('bad number of arguments')
+        }
+        const env = func.makeEnv()
+        let num = 0
+        for (const ast of this.children()) {
+            params.eval(env, num++, ast.eval(callerEnv))
+        }
+        return func.body.eval(env)
     }
 }

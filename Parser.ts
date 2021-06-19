@@ -1,23 +1,7 @@
 import { Token, Type } from './Token'
-import {
-    ASTLeaf,
-    ASTList,
-    ASTree,
-    PrimaryExpr,
-    BlockStmnt,
-    IfStmnt,
-    WhileStmnt,
-    NullStmnt,
-    NumberLiteral,
-    StringLiteral,
-    Name,
-    NegativeExpr,
-    BinaryExpr,
-} from './ASTree'
+import { ASTLeaf, ASTList, ASTree } from './ASTree'
 import Lexer from './Lexer'
 import { ParseError } from './Error'
-import { BasicEnv } from "./Environment"
-
 
 /*
 Java implementation:
@@ -76,9 +60,10 @@ protected static abstract class Factory {
     }
 */
 
-export const makeFactory = (cls: { new(...arg: any): any }) => {
+export const makeFactory = (cls: { new (...arg: any): any }) => {
     return (arg: any) => {
-        if (typeof cls === 'function') { // a class
+        if (typeof cls === 'function') {
+            // a class
             if (typeof cls['create'] === 'function') {
                 return cls['create'](arg)
             } else {

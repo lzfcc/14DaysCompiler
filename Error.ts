@@ -16,7 +16,7 @@ export class ParseError extends Error {
         const loc =
             t == Token.EOF
                 ? 'the last line'
-                : '"' + t.getText() + '" at line ' + t.getLineNumber()
+                : '"' + t.getText() + '" at line ' + t.lineNumber
         this.message = 'syntax error around ' + loc + '. ' + msg
     }
 }

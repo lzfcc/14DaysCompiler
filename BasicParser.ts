@@ -10,7 +10,7 @@ import {
     BlockStmnt,
     IfStmnt,
     WhileStmnt,
-    ASTree
+    ASTree,
 } from './ASTree'
 import { Token } from './Token'
 import Lexer from './Lexer'
@@ -74,16 +74,15 @@ export default class BasicParser {
     }
 }
 
-
-const lexer = new Lexer('./test-lexer.txt')
-lexer.process().then(() => {
-    const env = new BasicEnv()
-    const basicParser = new BasicParser()
-    while (lexer.peek(0) != Token.EOF) {
-        const ast = basicParser.parse(lexer)
-        console.log('=> ', ast.toString())
-        if (!(ast instanceof NullStmnt)) {
-            console.log('eval =>', ast.eval(env))
-        }
-    }
-})
+// const lexer = new Lexer('./test-lexer.stone')
+// lexer.process().then(() => {
+//     const env = new BasicEnv()
+//     const basicParser = new BasicParser()
+//     while (lexer.peek(0) != Token.EOF) {
+//         const ast = basicParser.parse(lexer)
+//         console.log('=> ', ast.toString())
+//         if (!(ast instanceof NullStmnt)) {
+//             console.log('eval =>', ast.eval(env))
+//         }
+//     }
+// })
