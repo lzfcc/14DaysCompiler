@@ -2,7 +2,7 @@ import Lexer from './Lexer'
 import { ExprParser, OpPrecedenceParser } from './ParserIntro'
 
 function testLexer() {
-    new Lexer('./test-lexer.txt').process()
+    new Lexer('./test-lexer.stone').process()
 }
 
 function testExprParser() {

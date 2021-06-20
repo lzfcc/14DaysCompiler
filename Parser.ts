@@ -1,22 +1,7 @@
 import { Token, Type } from './Token'
-import {
-    ASTLeaf,
-    ASTList,
-    ASTree,
-    PrimaryExpr,
-    BlockStmnt,
-    IfStmnt,
-    WhileStmnt,
-    NullStmnt,
-    NumberLiteral,
-    StringLiteral,
-    Name,
-    NegativeExpr,
-    BinaryExpr,
-} from './ASTree'
+import { ASTLeaf, ASTList, ASTree } from './ASTree'
 import Lexer from './Lexer'
 import { ParseError } from './Error'
-
 
 /*
 Java implementation:
@@ -75,28 +60,32 @@ protected static abstract class Factory {
     }
 */
 
-const makeFactory = (cls: { new(...arg: any): any }) => {
+export const makeFactory = (cls: { new (...arg: any): any }) => {
     return (arg: any) => {
-        if (typeof cls === 'function') { // a class
-            if (typeof cls['create'] === 'function') {
-                return cls['create'](arg)
-            } else {
-                return new cls(arg)
+        try {
+            if (typeof cls === 'function') {
+                // a class
+                if (typeof cls['create'] === 'function') {
+                    return cls['create'](arg)
+                } else {
+                    return new cls(arg)
+                }
             }
+            if (Array.isArray(arg)) {
+                return arg.length == 1 ? arg[0] : new ASTList(arg)
+            }
+        } catch (e) {
+            throw Error('factory error: ' + JSON.stringify(e))
         }
-        if (Array.isArray(arg)) {
-            return arg.length == 1 ? arg[0] : new ASTList(arg)
-        }
-        throw Error('factory error')
     }
 }
 
-abstract class Element {
+export abstract class Element {
     public abstract parse(lexer: Lexer, list: Array<ASTree>)
     public abstract match(lexer: Lexer): boolean
 }
 
-class Tree extends Element {
+export class Tree extends Element {
     public parser: Parser
 
     constructor(parser: Parser) {
@@ -113,7 +102,7 @@ class Tree extends Element {
     }
 }
 
-class OrTree extends Element {
+export class OrTree extends Element {
     public parsers: Parser[]
 
     constructor(parsers: Parser[]) {
@@ -143,12 +132,16 @@ class OrTree extends Element {
         return null
     }
 
+    /**
+     * insert a new parser into the first place of the parsers
+     * @param parser
+     */
     public insert(parser: Parser) {
-        this.parsers.push(parser)
+        this.parsers.unshift(parser)
     }
 }
 
-class Repeat extends Element {
+export class Repeat extends Element {
     public parser: Parser
     protected onlyOnce: boolean
 
@@ -175,7 +168,7 @@ class Repeat extends Element {
     }
 }
 
-abstract class ATokenElem extends Element {
+export abstract class ATokenElem extends Element {
     protected make
     constructor(type: any) {
         super()
@@ -202,7 +195,7 @@ abstract class ATokenElem extends Element {
     protected abstract test(t: Token): boolean
 }
 
-class IdTokenElem extends ATokenElem {
+export class IdTokenElem extends ATokenElem {
     private reserved: string[]
     constructor(type, reserved = []) {
         super(type)
@@ -216,19 +209,19 @@ class IdTokenElem extends ATokenElem {
     }
 }
 
-class NumTokenElem extends ATokenElem {
+export class NumTokenElem extends ATokenElem {
     protected test(t: Token): boolean {
         return t.getType() == Type.number
     }
 }
 
-class StrTokenElem extends ATokenElem {
+export class StrTokenElem extends ATokenElem {
     protected test(t: Token): boolean {
         return t.getType() == Type.string
     }
 }
 
-class Leaf extends Element {
+export class Leaf extends Element {
     protected tokens: string[]
 
     constructor(tokens: string[]) {
@@ -270,11 +263,11 @@ class Leaf extends Element {
     }
 }
 
-class Skip extends Leaf {
+export class Skip extends Leaf {
     protected find(list: Array<ASTree>, t: Token) {}
 }
 
-class Precedence {
+export class Precedence {
     leftAssociative: boolean
     value: number
     constructor(value = 0, leftAssociative = true) {
@@ -283,7 +276,7 @@ class Precedence {
     }
 }
 
-class Expr extends Element {
+export class Expr extends Element {
     protected make
     protected ops: { [operator: string]: Precedence }
     protected factor: Parser
@@ -342,14 +335,20 @@ class Expr extends Element {
     }
 }
 
-class Parser {
+export class Parser {
     protected elements: Element[]
     protected make: Function
+    /**
+     * for ease of debugging, add a name property, see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+     * @protected
+     */
+    protected name: string = ''
 
     constructor(arg = null) {
         if (arg instanceof Parser) {
             this.elements = arg.elements
             this.make = arg.make
+            this.name = arg.name
         } else {
             this.reset(arg)
         }
@@ -372,12 +371,20 @@ class Parser {
     }
 
     public static rule(cls = null): Parser {
-        return new Parser(cls)
+        if (typeof cls === 'function') {
+            return new Parser(cls)
+        }
+        const parser = new Parser()
+        if (typeof cls === 'string') {
+            parser.name = cls
+        }
+        return parser
     }
 
     public reset(cls?): Parser {
         this.elements = []
         this.make = makeFactory(cls)
+        this.name = cls?.name || '' // constructor name
         return this
     }
 
@@ -387,6 +394,10 @@ class Parser {
     }
 
     public identifier(cls = null, reserved = []): Parser {
+        if (Array.isArray(cls)) {
+            reserved = cls
+            cls = null
+        }
         this.elements.push(new IdTokenElem(cls, reserved))
         return this
     }
@@ -450,60 +461,3 @@ class Parser {
         return this
     }
 }
-
-const reserved = [';', '}', Token.EOL]
-const operators = {
-    '=': new Precedence(1, false),
-    '==': new Precedence(2),
-    '!=': new Precedence(2),
-    '<': new Precedence(2),
-    '<=': new Precedence(2),
-    '>': new Precedence(2),
-    '>=': new Precedence(2),
-    '+': new Precedence(3),
-    '-': new Precedence(3),
-    '*': new Precedence(4),
-    '/': new Precedence(4),
-    '%': new Precedence(4),
-}
-const expr0 = Parser.rule()
-const primary = Parser.rule(PrimaryExpr).or(
-    Parser.rule().sep('(').ast(expr0).sep(')'),
-    Parser.rule().number(NumberLiteral),
-    Parser.rule().identifier(Name, reserved),
-    Parser.rule().string(StringLiteral)
-)
-const factor = Parser.rule().or(
-    Parser.rule(NegativeExpr).sep('-').ast(primary),
-    primary
-)
-const expr = expr0.expression(BinaryExpr, factor, operators)
-
-const statement0 = Parser.rule()
-const block = Parser.rule(BlockStmnt)
-    .sep('{')
-    .option(statement0)
-    .repeat(Parser.rule().sep(';', Token.EOL).option(statement0))
-    .sep('}')
-const simple = Parser.rule(PrimaryExpr).ast(expr)
-const statement = statement0.or(
-    Parser.rule(IfStmnt)
-        .sep('if')
-        .ast(expr)
-        .ast(block)
-        .option(Parser.rule().sep('else').ast(block)),
-    Parser.rule(WhileStmnt).sep('while').ast(expr).ast(block),
-    simple
-)
-
-const program = Parser.rule()
-    .or(statement, Parser.rule(NullStmnt))
-    .sep(';', Token.EOL)
-
-const lexer = new Lexer('./test-lexer.txt')
-lexer.process().then(() => {
-    while (lexer.peek(0) != Token.EOF) {
-        const ast = program.parse(lexer)
-        console.log('=> ' + ast.toString())
-    }
-})

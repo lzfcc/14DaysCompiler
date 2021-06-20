@@ -15,7 +15,7 @@ export abstract class Token {
     // 换行
     public static EOL = '\n'
 
-    private readonly lineNumber = 0
+    readonly lineNumber = 0
 
     constructor(lineNumber) {
         this.lineNumber = lineNumber
@@ -33,10 +33,6 @@ export abstract class Token {
     // 节点文本
     public getText(): string {
         return ''
-    }
-
-    public getLineNumber() {
-        return this.lineNumber
     }
 }
 
