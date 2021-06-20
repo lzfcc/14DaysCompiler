@@ -1,11 +1,11 @@
 import BasicParser from './BasicParser'
 import { Parser } from './Parser'
-import { ParameterList, DefStmnt, Arguments, NullStmnt } from './ASTree'
+import { ParameterList, DefStmnt, Arguments, Closure } from './ASTree'
 import Lexer from './Lexer'
 import { NestedEnv } from './Environment'
 import { Token } from './Token'
 
-export default class FunctionParser extends BasicParser {
+export class FunctionParser extends BasicParser {
     param = Parser.rule('param').identifier(this.reserved)
     params = Parser.rule(ParameterList)
         .ast(this.param)
@@ -27,6 +27,13 @@ export default class FunctionParser extends BasicParser {
         this.primary.repeat(this.postfix)
         this.simple.option(this.args)
         this.program.insertChoice(this.def) // <=> program = rule().or(def, statement, rule(NullStmt)).sep(',', EOL)
+    }
+}
+
+export class ClosureParser extends FunctionParser {
+    constructor() {
+        super()
+        this.program.insertChoice(Parser.rule(Closure).sep('fun').ast(this.paramList).ast(this.block))
     }
 }
 

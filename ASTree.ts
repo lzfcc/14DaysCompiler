@@ -443,6 +443,7 @@ export class Postfix extends ASTList {
         return super.eval(env)
     }
 }
+
 export class Arguments extends Postfix {
     size() {
         return this.numChildren()
@@ -461,5 +462,20 @@ export class Arguments extends Postfix {
             params.eval(env, num++, ast.eval(callerEnv))
         }
         return func.body.eval(env)
+    }
+}
+
+export class Closure extends ASTList {
+    parameters(): ParameterList {
+        return this.child(0) as ParameterList
+    }
+    body(): BlockStmnt {
+        return this.child(1) as BlockStmnt
+    }
+    toString(): string {
+        return `(fun ${this.parameters()} ${this.body()})`
+    }
+    eval(env: Environment) {
+        return new StoneFunction(this.parameters(), this.body(), env)
     }
 }
