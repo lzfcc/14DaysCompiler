@@ -1,4 +1,4 @@
-import { Token } from './Token'
+import { Token } from './ast/Token'
 
 export class ParseError extends Error {
     // cannot use location method in constructor, since 'this' is an instance of Error

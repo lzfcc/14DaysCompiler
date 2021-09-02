@@ -1,9 +1,9 @@
 import BasicParser from './BasicParser'
 import { Parser } from './Parser'
-import { ParameterList, DefStmnt, Arguments, Closure } from './ASTree'
-import Lexer from './Lexer'
-import { NestedEnv } from './Environment'
-import { Token } from './Token'
+import { ParameterList, DefStmnt, Arguments, Closure, NullStmnt } from '../ast/ASTree'
+import Lexer from '../ast/Lexer'
+import { NestedEnv } from '../eval/Environment'
+import { Token } from '../ast/Token'
 
 export class FunctionParser extends BasicParser {
     param = Parser.rule('param').identifier(this.reserved)

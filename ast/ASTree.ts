@@ -1,6 +1,6 @@
 import { Type, Token } from './Token'
-import { Environment, NestedEnv } from './Environment'
-import { StoneFunction } from './StoneFunction'
+import { Environment, NestedEnv } from '../eval/Environment'
+import { StoneFunction } from '../func/StoneFunction'
 
 export abstract class ASTree {
     protected _children: Array<ASTree>

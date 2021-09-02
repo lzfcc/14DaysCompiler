@@ -1,5 +1,5 @@
-import Lexer from './Lexer'
-import { ExprParser, OpPrecedenceParser } from './ParserIntro'
+import Lexer from './ast/Lexer'
+import { ExprParser, OpPrecedenceParser } from './parser/ParserIntro'
 
 function testLexer() {
     new Lexer('./test-lexer.stone').process()

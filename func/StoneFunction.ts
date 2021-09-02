@@ -1,5 +1,5 @@
-import { BlockStmnt, ParameterList } from './ASTree'
-import { Environment, NestedEnv } from './Environment'
+import { BlockStmnt, ParameterList } from '../ast/ASTree'
+import { Environment, NestedEnv } from '../eval/Environment'
 
 export class StoneFunction {
     readonly parameters: ParameterList

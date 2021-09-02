@@ -1,7 +1,7 @@
-import { ASTLeaf, ASTree, BinaryExpr, NumberLiteral } from './ASTree'
-import Lexer from './Lexer'
-import { ParseError} from './Error'
-import { Token, Type } from './Token'
+import { ASTLeaf, ASTree, BinaryExpr, NumberLiteral } from '../ast/ASTree'
+import Lexer from '../ast/Lexer'
+import { ParseError } from '../Error'
+import { Token, Type } from '../ast/Token'
 
 // chapter 16
 export class ExprParser {

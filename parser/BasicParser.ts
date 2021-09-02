@@ -11,10 +11,10 @@ import {
     IfStmnt,
     WhileStmnt,
     ASTree,
-} from './ASTree'
-import { Token } from './Token'
-import Lexer from './Lexer'
-import { BasicEnv } from './Environment'
+} from '../ast/ASTree'
+import { Token } from '../ast/Token'
+import Lexer from '../ast/Lexer'
+import { BasicEnv } from '../eval/Environment'
 
 export default class BasicParser {
     reserved = [';', '}', Token.EOL]

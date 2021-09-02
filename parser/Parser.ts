@@ -1,7 +1,7 @@
-import { Token, Type } from './Token'
-import { ASTLeaf, ASTList, ASTree } from './ASTree'
-import Lexer from './Lexer'
-import { ParseError } from './Error'
+import { Token, Type } from '../ast/Token'
+import { ASTLeaf, ASTList, ASTree } from '../ast/ASTree'
+import Lexer from '../ast/Lexer'
+import { ParseError } from '../Error'
 
 /*
 Java implementation:
