@@ -1,4 +1,4 @@
-import * as token from './token.mjs'
+import * as token from './token'
 
 const Keywords = {
     fn: token.FUNCTION,
@@ -10,7 +10,7 @@ const Keywords = {
     return: token.RETURN
 }
 
-export function Lexer(input) {
+function Lexer(input) {
     // struct
     this.input = input
     this.position = 0 // current position in input (points to current char)
@@ -28,7 +28,7 @@ Lexer.prototype.readChar = function () {
     this.readPosition += 1
 }
 
-Lexer.prototype.nextToken = function () {
+Lexer.prototype.NextToken = function () {
     let tok = null
 
     this.skipWhitespace()
@@ -158,7 +158,7 @@ function isDigit(ch) {
     return /\d/.test(ch)
 }
 
-function New(input) {
+export function New(input) {
     const l = new Lexer(input)
     l.readChar()
     return l
@@ -189,9 +189,9 @@ if (5 < 10) {
 
     let tok = null
     do {
-        tok = l.nextToken()
+        tok = l.NextToken()
         console.log(tok)
-    } while (tok.type != token.EOF)
+    } while (tok.Type != token.EOF)
 }
 
 testNextToken()

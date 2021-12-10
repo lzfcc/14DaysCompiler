@@ -39,6 +39,6 @@ export const NOT_EQ = '!='
 
 export function Token(type, literal) {
     // struct
-    this.type = type
-    this.literal = literal
+    this.Type = type
+    this.Literal = literal
 }
