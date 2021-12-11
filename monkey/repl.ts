@@ -12,9 +12,9 @@ function Start(input, output) {
     // https://nodejs.org/api/readline.html#rlpromptpreservecursor
     function repl() {
         rl.question(PROMPT, (line) => {
-            const l = lexer.New(line)
+            const l = new lexer.Lexer(line)
             let i = 0
-            for (let tok = l.NextToken(); tok.Type != token.EOF; tok = l.NextToken()) {
+            for (let tok = l.nextToken(); tok.type != token.EOF; tok = l.nextToken()) {
                 console.log(tok) // rl.out??
             }
 

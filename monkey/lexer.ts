@@ -10,144 +10,151 @@ const Keywords = {
     return: token.RETURN
 }
 
-function Lexer(input) {
-    // struct
-    this.input = input
-    this.position = 0 // current position in input (points to current char)
-    this.readPosition = 0 // current reading position in input (after current char)
-    this.ch = ''
-}
+export class Lexer {
+    private input: string
+    private position = 0 // current position in input (points to current char)
+    private readPosition = 0 // current reading position in input (after current char)
+    private ch = ''
 
-Lexer.prototype.readChar = function () {
-    if (this.readPosition >= this.input.length) {
-        this.ch = '\0'
-    } else {
-        this.ch = this.input[this.readPosition]
-    }
-    this.position = this.readPosition
-    this.readPosition += 1
-}
+    constructor(input) {
+        this.input = input
 
-Lexer.prototype.NextToken = function () {
-    let tok = null
-
-    this.skipWhitespace()
-    switch (this.ch) {
-        case '=':
-            if (this.peekChar() === '=') {
-                this.readChar()
-                tok = newToken(token.EQ, '==')
-            } else {
-                tok = newToken(token.ASSIGN, this.ch)
-            }
-            break
-        case ';':
-            tok = newToken(token.SEMICOLON, this.ch)
-            break
-        case '(':
-            tok = newToken(token.LPAREN, this.ch)
-            break
-        case ')':
-            tok = newToken(token.RPAREN, this.ch)
-            break
-        case ',':
-            tok = newToken(token.COMMA, this.ch)
-            break
-        case '+':
-            tok = newToken(token.PLUS, this.ch)
-            break
-        case '{':
-            tok = newToken(token.LBRACE, this.ch)
-            break
-        case '}':
-            tok = newToken(token.RBRACE, this.ch)
-            break
-        case '\0':
-            tok = newToken(token.EOF, this.ch)
-            break
-        case '+':
-            tok = newToken(token.PLUS, this.ch)
-            break
-        case '-':
-            tok = newToken(token.MINUS, this.ch)
-            break
-        case '!':
-            if (this.peekChar() === '=') {
-                this.readChar()
-                tok = newToken(token.NOT_EQ, '!=')
-            } else {
-                tok = newToken(token.BANG, this.ch)
-            }
-            break
-        case '/':
-            tok = newToken(token.SLASH, this.ch)
-            break
-        case '*':
-            tok = newToken(token.ASTERISK, this.ch)
-            break
-        case '<':
-            tok = newToken(token.LT, this.ch)
-            break
-        case '>':
-            tok = newToken(token.GT, this.ch)
-            break
-        case ';':
-            tok = newToken(token.SEMICOLON, this.ch)
-            break
-        case ',':
-            tok = newToken(token.COMMA, this.ch)
-            break
-        default:
-            if (isLetter(this.ch)) {
-                tok = newToken(token.IDENT, this.readIdentifier())
-                return tok
-            } else if (isDigit(this.ch)) {
-                tok = newToken(token.INT, this.readNumber())
-                return tok
-            } else {
-                tok = newToken(token.ILLEGAL, this.ch)
-            }
+        this.readChar()
     }
 
-    this.readChar()
-    return tok
+    private readChar() {
+        if (this.readPosition >= this.input.length) {
+            this.ch = '\0'
+        } else {
+            this.ch = this.input[this.readPosition]
+        }
+        this.position = this.readPosition
+        this.readPosition += 1
+    }
+
+    public nextToken(): token.Token {
+        let tok = null
+
+        this.skipWhitespace()
+        switch (this.ch) {
+            case '=':
+                if (this.peekChar() === '=') {
+                    this.readChar()
+                    tok = newToken(token.EQ, '==')
+                } else {
+                    tok = newToken(token.ASSIGN, this.ch)
+                }
+                break
+            case ';':
+                tok = newToken(token.SEMICOLON, this.ch)
+                break
+            case '(':
+                tok = newToken(token.LPAREN, this.ch)
+                break
+            case ')':
+                tok = newToken(token.RPAREN, this.ch)
+                break
+            case ',':
+                tok = newToken(token.COMMA, this.ch)
+                break
+            case '+':
+                tok = newToken(token.PLUS, this.ch)
+                break
+            case '{':
+                tok = newToken(token.LBRACE, this.ch)
+                break
+            case '}':
+                tok = newToken(token.RBRACE, this.ch)
+                break
+            case '\0':
+                tok = newToken(token.EOF, this.ch)
+                break
+            case '+':
+                tok = newToken(token.PLUS, this.ch)
+                break
+            case '-':
+                tok = newToken(token.MINUS, this.ch)
+                break
+            case '!':
+                if (this.peekChar() === '=') {
+                    this.readChar()
+                    tok = newToken(token.NOT_EQ, '!=')
+                } else {
+                    tok = newToken(token.BANG, this.ch)
+                }
+                break
+            case '/':
+                tok = newToken(token.SLASH, this.ch)
+                break
+            case '*':
+                tok = newToken(token.ASTERISK, this.ch)
+                break
+            case '<':
+                tok = newToken(token.LT, this.ch)
+                break
+            case '>':
+                tok = newToken(token.GT, this.ch)
+                break
+            case ';':
+                tok = newToken(token.SEMICOLON, this.ch)
+                break
+            case ',':
+                tok = newToken(token.COMMA, this.ch)
+                break
+            default:
+                if (isLetter(this.ch)) {
+                    let lit = this.readIdentifier()
+                    tok = newToken(LookupIdent(lit), lit)
+                    return tok
+                } else if (isDigit(this.ch)) {
+                    tok = newToken(token.INT, this.readNumber())
+                    return tok
+                } else {
+                    tok = newToken(token.ILLEGAL, this.ch)
+                }
+        }
+
+        this.readChar()
+        return tok
+    }
+
+    private readIdentifier(): string {
+        let position = this.position
+        while (isLetter(this.ch)) {
+            this.readChar()
+        }
+        return this.input.slice(position, this.position)
+    }
+
+    private skipWhitespace() {
+        while (/\s/.test(this.ch)) {
+            this.readChar()
+        }
+    }
+
+    private peekChar(): string {
+        if (this.readPosition >= this.input.length) {
+            return '\0'
+        } else {
+            return this.input[this.readPosition]
+        }
+    }
+
+    private readNumber(): string {
+        let position = this.position
+        while (isDigit(this.ch)) {
+            this.readChar()
+        }
+        return this.input.slice(position, this.position)
+    }
 }
 
 function newToken(type, literal) {
     return new token.Token(type, literal)
 }
 
-Lexer.prototype.readIdentifier = function () {
-    let position = this.position
-    while (isLetter(this.ch)) {
-        this.readChar()
-    }
-    return this.input.slice(position, this.position)
-}
-Lexer.prototype.skipWhitespace = function () {
-    while (/\s/.test(this.ch)) {
-        this.readChar()
-    }
-}
-
-Lexer.prototype.peekChar = function () {
-    if (this.readPosition >= this.input.length) {
-        return '\0'
-    } else {
-        return this.input[this.readPosition]
-    }
-}
-
-function lookupIdent(ident) {
+function LookupIdent(ident) {
     return Keywords[ident] || token.IDENT
-}
-
-Lexer.prototype.readNumber = function () {
-    let position = this.position
-    while (isDigit(this.ch)) {
-        this.readChar()
-    }
-    return this.input.slice(position, this.position)
 }
 
 function isLetter(ch) {
@@ -156,12 +163,6 @@ function isLetter(ch) {
 
 function isDigit(ch) {
     return /\d/.test(ch)
-}
-
-export function New(input) {
-    const l = new Lexer(input)
-    l.readChar()
-    return l
 }
 
 function testNextToken() {
@@ -185,13 +186,13 @@ if (5 < 10) {
 10 == 10;
 10 != 9;
 `
-    const l = New(input)
+    const l = new Lexer(input)
 
-    let tok = null
+    let tok: token.Token = null
     do {
-        tok = l.NextToken()
+        tok = l.nextToken()
         console.log(tok)
-    } while (tok.Type != token.EOF)
+    } while (tok.type != token.EOF)
 }
 
-testNextToken()
+// testNextToken()

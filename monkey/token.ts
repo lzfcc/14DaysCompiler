@@ -1,5 +1,7 @@
 // type TokenType string
 
+export type TokenType = string
+
 export const ILLEGAL = 'ILLEGAL'
 export const EOF = 'EOF'
 
@@ -37,8 +39,11 @@ export const GT = '>'
 export const EQ = '=='
 export const NOT_EQ = '!='
 
-export function Token(type, literal) {
-    // struct
-    this.Type = type
-    this.Literal = literal
+export class Token {
+    type: TokenType
+    literal: string
+    constructor (type, literal) {
+        this.type = type
+        this.literal = literal
+    }
 }
