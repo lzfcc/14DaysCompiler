@@ -65,6 +65,17 @@ class Parser {
         expr.right = this.parseExpression(prec)
         return expr
     }
+    private parseBool = () => {
+        return new ast.Bool(this.curToken, this.curTokenIs(token.TRUE))
+    }
+    private parseGroupedExpression = () => {
+        this.nextToken()
+        const expr = this.parseExpression(OP_ORDER.LOWEST) // !!: OP_ORDER.LOWEST, compared: parseInfixExpression 
+        if (!this.expectPeek(token.RPAREN)) {
+            return null
+        }
+        return expr
+    }
 
     constructor(l: lexer.Lexer) {
         this.l = l
@@ -88,6 +99,11 @@ class Parser {
         this.registerInfix(token.NOT_EQ, this.parseInfixExpression)
         this.registerInfix(token.LT, this.parseInfixExpression)
         this.registerInfix(token.GT, this.parseInfixExpression)
+
+        this.registerPrefix(token.TRUE, this.parseBool)
+        this.registerPrefix(token.FALSE, this.parseBool)
+
+        this.registerPrefix(token.LPAREN, this.parseGroupedExpression)
     }
 
     private nextToken() {
@@ -361,14 +377,22 @@ function ParserGeneralTest(scenario, input: string | string[]) {
 // ])
 
 ParserGeneralTest('InfixExpressions', [
-    '-a + b;',
-    '!-a;',
-    'a + b - c;',
-    '4 * 5 / 2; 1 + 2',
-    '2 + 1 * 3 + 5',
-    '5 > 5 == 2 < 3;',
-    '5 < 5 != 4 > 2;',
-    '5 * 2 == 5 + 5',
-    '3 > 2 == 4 == 0', // ((3 > 2) == 4) == 0 => true
-    '0 * 1 == 1 > 1', // (0 * 1) == (1 > 1) => true
+    // '-a + b;',
+    // '!-a;',
+    // 'a + b - c;',
+    // '4 * 5 / 2; 1 + 2',
+    // '2 + 1 * 3 + 5',
+    // '5 > 5 == 2 < 3;',
+    // '5 < 5 != 4 > 2;',
+    // '5 * 2 == 5 + 5',
+    // '3 > 2 == 4 == 0', // ((3 > 2) == 4) == 0 => true
+    // '0 * 1 == 1 > 1', // (0 * 1) == (1 > 1) => true
+
+    // '!true',
+    // 'true == false',
+    // '1 > 2 != true',
+
+    '(1 + 2) * 3',
+    '-(3 + 4)',
+    '!(true == false)'
 ])

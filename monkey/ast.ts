@@ -153,3 +153,20 @@ export class InfixExpression implements Expression {
         this.left = left
     }
 }
+
+export class Bool implements Expression {
+    expressionNode() {
+    }
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        return this.token.literal
+    }
+    token: token.Token
+    value: boolean
+    constructor(token: token.Token, value: boolean) {
+        this.token = token
+        this.value = value
+    }
+}
