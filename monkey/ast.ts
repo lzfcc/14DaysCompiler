@@ -124,8 +124,7 @@ export class PrefixExpression implements Expression {
         this.token = token
         this.operator = opr
     }
-    expressionNode() {
-    }
+    expressionNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
@@ -144,8 +143,7 @@ export class InfixExpression implements Expression {
         this.operator = opr
         this.left = left
     }
-    expressionNode() {
-    }
+    expressionNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
@@ -161,8 +159,7 @@ export class Bool implements Expression {
         this.token = token
         this.value = value
     }
-    expressionNode() {
-    }
+    expressionNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
@@ -174,18 +171,17 @@ export class Bool implements Expression {
 export class IfExpression implements Expression {
     token: token.Token
     condition: Expression
-    consequence: BlockStatement 
+    consequence: BlockStatement
     alternative: BlockStatement
-    constructor (token: token.Token) {
+    constructor(token: token.Token) {
         this.token = token
     }
-    expressionNode() {
-    }
+    expressionNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
     string(): string {
-        let str = `if ${this.condition.string()} {${this.consequence.string()}}` 
+        let str = `if ${this.condition.string()} {${this.consequence.string()}}`
         if (this.alternative) {
             str += ` else {${this.alternative.string()}}`
         }
@@ -196,16 +192,15 @@ export class IfExpression implements Expression {
 export class BlockStatement implements Statement {
     token: token.Token
     statements: Statement[] = []
-    constructor (token: token.Token) {
+    constructor(token: token.Token) {
         this.token = token
     }
-    statementNode() {
-    }
+    statementNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
     string(): string {
-        return this.statements.map(s => s.string()).join()
+        return this.statements.map((s) => s.string()).join()
     }
 }
 
@@ -214,15 +209,49 @@ export class WhileExpression implements Expression {
     token: token.Token
     condition: Expression
     body: BlockStatement
-    constructor (token: token.Token) {
+    constructor(token: token.Token) {
         this.token = token
     }
-    expressionNode() {
-    }
+    expressionNode() {}
     tokenLiteral(): string {
         return this.token.literal
     }
     string(): string {
-        return `while ${this.condition.string()} {${this.body.string()}}` 
+        return `while ${this.condition.string()} {${this.body.string()}}`
+    }
+}
+
+export class FunctionLiteral implements Expression {
+    token: token.Token
+    parameters: Identifier[]
+    body: BlockStatement
+    constructor(token: token.Token) {
+        this.token = token
+    }
+    expressionNode() {}
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        const paramStr = this.parameters.map((v) => v.string()).join(',')
+        return `${this.tokenLiteral()}(${paramStr}){${this.body.string()}}`
+    }
+}
+
+export class CallExpression implements Expression {
+    token: token.Token // '('
+    func: Expression // Identifer or FunctionLiteral
+    args: Expression[]
+    constructor(token: token.Token, func: Expression) {
+        this.token = token
+        this.func = func
+    }
+    expressionNode() {}
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        const paramStr = this.args.map((v) => v.string()).join(',')
+        return `${this.func.string()}(${paramStr})`
     }
 }

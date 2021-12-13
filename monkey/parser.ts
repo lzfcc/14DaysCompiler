@@ -27,6 +27,8 @@ const precedences = {
     [token.MINUS]: OP_ORDER.SUM,
     [token.SLASH]: OP_ORDER.PRODUCT,
     [token.ASTERISK]: OP_ORDER.PRODUCT,
+    // add this for function call, a little hard to think
+    [token.LPAREN]: OP_ORDER.CALL
 }
 
 class Parser {
@@ -72,7 +74,7 @@ class Parser {
     }
     private parseGroupedExpression = () => {
         this.nextToken()
-        const expr = this.parseExpression(OP_ORDER.LOWEST) // !!: OP_ORDER.LOWEST, compared: parseInfixExpression 
+        const expr = this.parseExpression(OP_ORDER.LOWEST) // !!: OP_ORDER.LOWEST, compared: parseInfixExpression
         if (!this.expectPeek(token.RPAREN)) {
             return null
         }
@@ -119,6 +121,41 @@ class Parser {
         expr.body = this.parseBlockStatement()
         return expr
     }
+    private parseFunctionLiteral = () => {
+        const lit = new ast.FunctionLiteral(this.curToken)
+        if (!this.expectPeek(token.LPAREN)) {
+            return null
+        }
+        lit.parameters = this.parseFunctionParameters()
+        if (!this.expectPeek(token.LBRACE)) {
+            return null
+        }
+        lit.body = this.parseBlockStatement()
+        return lit
+    }
+    private parseCallExpression = (func: ast.Expression) => {
+        const expr = new ast.CallExpression(this.curToken, func)
+        expr.args = this.parseCallArguments()
+        return expr
+    }
+    private parseCallArguments = () => {
+        const args: ast.Expression[] = []
+        if (this.peekTokenIs(token.RPAREN)) {
+            this.nextToken()
+            return args
+        }
+        this.nextToken()
+        args.push(this.parseExpression(OP_ORDER.LOWEST))
+        while (this.peekTokenIs(token.COMMA)) {
+            this.nextToken()
+            this.nextToken()
+            args.push(this.parseExpression(OP_ORDER.LOWEST))
+        }
+        if (!this.expectPeek(token.RPAREN)) {
+            return null
+        }
+        return args
+    }
 
     constructor(l: lexer.Lexer) {
         this.l = l
@@ -142,6 +179,8 @@ class Parser {
         this.registerInfix(token.NOT_EQ, this.parseInfixExpression)
         this.registerInfix(token.LT, this.parseInfixExpression)
         this.registerInfix(token.GT, this.parseInfixExpression)
+        // add this for function call expression, a little hard to think
+        this.registerInfix(token.LPAREN, this.parseCallExpression)
 
         // maybe we need an assign statement?
         this.registerInfix(token.ASSIGN, this.parseInfixExpression)
@@ -152,6 +191,7 @@ class Parser {
         this.registerPrefix(token.LPAREN, this.parseGroupedExpression)
         this.registerPrefix(token.IF, this.parseIfExpression)
         this.registerPrefix(token.WHILE, this.parseWhileExpression)
+        this.registerPrefix(token.FUNCTION, this.parseFunctionLiteral)
     }
 
     private nextToken() {
@@ -186,37 +226,28 @@ class Parser {
 
     private parseLetStatement(): ast.LetStatement {
         const stmt = new ast.LetStatement(this.curToken)
-
         if (!this.expectPeek(token.IDENT)) {
             return null
         }
-
         stmt.name = new ast.Identifier(this.curToken, this.curToken.literal)
-
         if (!this.expectPeek(token.ASSIGN)) {
             return null
         }
-
-        // TODO: We're skipping the expressions until we
-        // encounter a semicolon
-        while (!this.curTokenIs(token.SEMICOLON)) {
+        this.nextToken()
+        stmt.value = this.parseExpression(OP_ORDER.LOWEST)
+        if (this.peekTokenIs(token.SEMICOLON)) {
             this.nextToken()
         }
-
         return stmt
     }
 
     private parseReturnStatement(): ast.Statement {
         const stmt = new ast.ReturnStatement(this.curToken)
-
         this.nextToken()
-
-        // TODO: We're skipping the expressions until we
-        // encounter a semicolon
-        while (!this.curTokenIs(token.SEMICOLON)) {
+        stmt.returnValue = this.parseExpression(OP_ORDER.LOWEST)
+        if (this.peekTokenIs(token.SEMICOLON)) {
             this.nextToken()
         }
-
         return stmt
     }
 
@@ -272,7 +303,28 @@ class Parser {
             this.nextToken()
         }
         return block
-     }
+    }
+
+    parseFunctionParameters(): ast.Identifier[] {
+        const identifiers: ast.Identifier[] = []
+        if (this.peekTokenIs(token.RPAREN)) {
+            this.nextToken()
+            return identifiers
+        }
+        this.nextToken() // skip '('
+        let id = new ast.Identifier(this.curToken, this.curToken.literal)
+        identifiers.push(id)
+        while (this.peekTokenIs(token.COMMA)) {
+            this.nextToken() // skip current id token
+            this.nextToken() // skip ','
+            id = new ast.Identifier(this.curToken, this.curToken.literal)
+            identifiers.push(id)
+        }
+        if (!this.expectPeek(token.RPAREN)) {
+            return null
+        }
+        return identifiers
+    }
 
     private curTokenIs(t: token.TokenType): boolean {
         return this.curToken.type == t
@@ -302,7 +354,7 @@ class Parser {
     peekPrecedence(): OP_ORDER {
         return precedences[this.peekToken.type] || OP_ORDER.LOWEST
     }
-    
+
     curPrecedence(): OP_ORDER {
         return precedences[this.curToken.type] || OP_ORDER.LOWEST
     }
@@ -331,9 +383,7 @@ let foobar = 838383;
 
     tests.forEach((tt, i) => {
         const stmt = program.statements[i]
-        if (testLetStatement(stmt, tt)) {
-            console.error('Error')
-        }
+        testLetStatement(stmt, tt)
     })
 
     function testLetStatement(s: ast.Statement, name: string): boolean {
@@ -364,7 +414,7 @@ let foobar = 838383;
     }
 }
 
-// TestLetStatements()
+TestLetStatements()
 
 function TestReturnStatement() {
     const input = `
@@ -464,7 +514,20 @@ function ParserGeneralTest(scenario, input: string | string[]) {
 // ])
 
 // extended by me
-ParserGeneralTest('if-else expressions with statement', [
-    'if (x < y) { x }',
-    'if (x < y) { x = y == x / 2; } else { x = x + y; y = !foo(x); }'
-])
+// ParserGeneralTest('assign expression', 'x = a / 2 + 1')
+// ParserGeneralTest('if-else expressions with statement', [
+//     'if (x < y) { x }',
+//     'if (x < y) { x = y == x / 2; } else { x = x + y; y = !foo(x); }'
+// ])
+
+// ParserGeneralTest('function literal', [
+//     'fn(){};',
+//     'fn(x){};',
+//     'fn(x, y) { return x - y };'
+// ])
+
+// ParserGeneralTest('call function', [
+//     'add(2, 3)',
+//     'foo(a * 4, 1, 5 - bar(3))',
+//     'a + mul(a * b) / c'
+// ])
