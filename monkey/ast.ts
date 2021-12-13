@@ -70,14 +70,14 @@ export class Identifier implements Expression {
 }
 
 export class ReturnStatement implements Statement {
-    statementNode() {}
-    tokenLiteral(): string {
-        return this.token.literal // token.RETURN
-    }
     token: token.Token
     returnValue: Expression
     constructor(token: token.Token) {
         this.token = token
+    }
+    statementNode() {}
+    tokenLiteral(): string {
+        return this.token.literal // token.RETURN
     }
     string(): string {
         return `${this.tokenLiteral()} ${this.returnValue.string()};`
@@ -85,15 +85,15 @@ export class ReturnStatement implements Statement {
 }
 
 export class ExpressionStatement implements Statement {
-    statementNode() {}
-    tokenLiteral(): string {
-        return this.token.literal
-    }
     token: token.Token // the first token of the expression
     expression: Expression
     constructor(token: token.Token, expr: Expression) {
         this.token = token
         this.expression = expr
+    }
+    statementNode() {}
+    tokenLiteral(): string {
+        return this.token.literal
     }
     string(): string {
         return `${this.expression.string()}`
@@ -117,6 +117,13 @@ export class IntegerLiteral implements Expression {
 }
 
 export class PrefixExpression implements Expression {
+    token: token.Token
+    operator: string
+    right: Expression
+    constructor(token: token.Token, opr: string) {
+        this.token = token
+        this.operator = opr
+    }
     expressionNode() {
     }
     tokenLiteral(): string {
@@ -125,24 +132,9 @@ export class PrefixExpression implements Expression {
     string(): string {
         return `(${this.operator}${this.right.string()})`
     }
-    token: token.Token
-    operator: string
-    right: Expression
-    constructor(token: token.Token, opr: string) {
-        this.token = token
-        this.operator = opr
-    }
 }
 
 export class InfixExpression implements Expression {
-    expressionNode() {
-    }
-    tokenLiteral(): string {
-        return this.token.literal
-    }
-    string(): string {
-        return `(${this.left.string()}${this.operator}${this.right.string()})`
-    }
     token: token.Token
     operator: string
     left: Expression
@@ -152,9 +144,23 @@ export class InfixExpression implements Expression {
         this.operator = opr
         this.left = left
     }
+    expressionNode() {
+    }
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        return `(${this.left.string()}${this.operator}${this.right.string()})`
+    }
 }
 
 export class Bool implements Expression {
+    token: token.Token
+    value: boolean
+    constructor(token: token.Token, value: boolean) {
+        this.token = token
+        this.value = value
+    }
     expressionNode() {
     }
     tokenLiteral(): string {
@@ -163,10 +169,43 @@ export class Bool implements Expression {
     string(): string {
         return this.token.literal
     }
+}
+
+export class IfExpression implements Expression {
     token: token.Token
-    value: boolean
-    constructor(token: token.Token, value: boolean) {
+    condition: Expression
+    consequence: BlockStatement 
+    alternative: BlockStatement
+    expr: Statement
+    constructor (token: token.Token) {
         this.token = token
-        this.value = value
+    }
+    expressionNode() {
+    }
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        let str = `if ${this.condition.string()} {${this.consequence.string()}}` 
+        if (this.alternative) {
+            str += ` else {${this.alternative.string()}}`
+        }
+        return str
+    }
+}
+
+export class BlockStatement implements Statement {
+    token: token.Token
+    statements: Statement[] = []
+    constructor (token: token.Token) {
+        this.token = token
+    }
+    statementNode() {
+    }
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        return this.statements.map(s => s.string()).join()
     }
 }

@@ -76,6 +76,31 @@ class Parser {
         }
         return expr
     }
+    private parseIfExpression = () => {
+        const expr = new ast.IfExpression(this.curToken)
+        if (!this.expectPeek(token.LPAREN)) {
+            return null
+        }
+        this.nextToken()
+        expr.condition = this.parseExpression(OP_ORDER.LOWEST)
+        if (!this.expectPeek(token.RPAREN)) {
+            return null
+        }
+        if (!this.expectPeek(token.LBRACE)) {
+            return null
+        }
+        expr.consequence = this.parseBlockStatement()
+
+        if (this.peekTokenIs(token.ELSE)) {
+            this.nextToken()
+            if (!this.expectPeek(token.LBRACE)) {
+                return null
+            }
+            expr.alternative = this.parseBlockStatement()
+        }
+
+        return expr
+    }
 
     constructor(l: lexer.Lexer) {
         this.l = l
@@ -104,6 +129,7 @@ class Parser {
         this.registerPrefix(token.FALSE, this.parseBool)
 
         this.registerPrefix(token.LPAREN, this.parseGroupedExpression)
+        this.registerPrefix(token.IF, this.parseIfExpression)
     }
 
     private nextToken() {
@@ -212,6 +238,19 @@ class Parser {
         }
         return leftExpr
     }
+
+    private parseBlockStatement(): ast.BlockStatement {
+        const block = new ast.BlockStatement(this.curToken)
+        this.nextToken()
+        while (!this.curTokenIs(token.RBRACE) && !this.curTokenIs(token.EOF)) {
+            const stmt = this.parseStatement()
+            if (stmt) {
+                block.statements.push(stmt)
+            }
+            this.nextToken()
+        }
+        return block
+     }
 
     private curTokenIs(t: token.TokenType): boolean {
         return this.curToken.type == t
@@ -376,23 +415,28 @@ function ParserGeneralTest(scenario, input: string | string[]) {
 //     '5 != 5;'
 // ])
 
-ParserGeneralTest('InfixExpressions', [
-    // '-a + b;',
-    // '!-a;',
-    // 'a + b - c;',
-    // '4 * 5 / 2; 1 + 2',
-    // '2 + 1 * 3 + 5',
-    // '5 > 5 == 2 < 3;',
-    // '5 < 5 != 4 > 2;',
-    // '5 * 2 == 5 + 5',
-    // '3 > 2 == 4 == 0', // ((3 > 2) == 4) == 0 => true
-    // '0 * 1 == 1 > 1', // (0 * 1) == (1 > 1) => true
+// ParserGeneralTest('InfixExpressions', [
+//     '-a + b;',
+//     '!-a;',
+//     'a + b - c;',
+//     '4 * 5 / 2; 1 + 2',
+//     '2 + 1 * 3 + 5',
+//     '5 > 5 == 2 < 3;',
+//     '5 < 5 != 4 > 2;',
+//     '5 * 2 == 5 + 5',
+//     '3 > 2 == 4 == 0', // ((3 > 2) == 4) == 0 => true
+//     '0 * 1 == 1 > 1', // (0 * 1) == (1 > 1) => true
 
-    // '!true',
-    // 'true == false',
-    // '1 > 2 != true',
+//     '!true',
+//     'true == false',
+//     '1 > 2 != true',
 
-    '(1 + 2) * 3',
-    '-(3 + 4)',
-    '!(true == false)'
+//     '(1 + 2) * 3',
+//     '-(3 + 4)',
+//     '!(true == false)'
+// ])
+
+ParserGeneralTest('if-else expressions', [
+    'if (x < y) { x }',
+    'if (x < y) { x } else { y }'
 ])
