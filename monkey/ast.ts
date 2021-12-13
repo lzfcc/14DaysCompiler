@@ -176,7 +176,6 @@ export class IfExpression implements Expression {
     condition: Expression
     consequence: BlockStatement 
     alternative: BlockStatement
-    expr: Statement
     constructor (token: token.Token) {
         this.token = token
     }
@@ -207,5 +206,23 @@ export class BlockStatement implements Statement {
     }
     string(): string {
         return this.statements.map(s => s.string()).join()
+    }
+}
+
+// no, this will not work
+export class WhileExpression implements Expression {
+    token: token.Token
+    condition: Expression
+    body: BlockStatement
+    constructor (token: token.Token) {
+        this.token = token
+    }
+    expressionNode() {
+    }
+    tokenLiteral(): string {
+        return this.token.literal
+    }
+    string(): string {
+        return `while ${this.condition.string()} {${this.body.string()}}` 
     }
 }

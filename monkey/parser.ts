@@ -8,6 +8,7 @@ type InfixParseFn = (expr: ast.Expression) => ast.Expression
 
 enum OP_ORDER {
     LOWEST = 0,
+    ASSIGN,
     EQUALS,
     LESSGREATER,
     SUM,
@@ -17,6 +18,7 @@ enum OP_ORDER {
 }
 
 const precedences = {
+    [token.ASSIGN]: OP_ORDER.ASSIGN,
     [token.EQ]: OP_ORDER.EQUALS,
     [token.NOT_EQ]: OP_ORDER.EQUALS,
     [token.LT]: OP_ORDER.LESSGREATER,
@@ -101,6 +103,22 @@ class Parser {
 
         return expr
     }
+    private parseWhileExpression = () => {
+        const expr = new ast.WhileExpression(this.curToken)
+        if (!this.expectPeek(token.LPAREN)) {
+            return null
+        }
+        this.nextToken()
+        expr.condition = this.parseExpression(OP_ORDER.LOWEST)
+        if (!this.expectPeek(token.RPAREN)) {
+            return null
+        }
+        if (!this.expectPeek(token.LBRACE)) {
+            return null
+        }
+        expr.body = this.parseBlockStatement()
+        return expr
+    }
 
     constructor(l: lexer.Lexer) {
         this.l = l
@@ -125,11 +143,15 @@ class Parser {
         this.registerInfix(token.LT, this.parseInfixExpression)
         this.registerInfix(token.GT, this.parseInfixExpression)
 
+        // maybe we need an assign statement?
+        this.registerInfix(token.ASSIGN, this.parseInfixExpression)
+
         this.registerPrefix(token.TRUE, this.parseBool)
         this.registerPrefix(token.FALSE, this.parseBool)
 
         this.registerPrefix(token.LPAREN, this.parseGroupedExpression)
         this.registerPrefix(token.IF, this.parseIfExpression)
+        this.registerPrefix(token.WHILE, this.parseWhileExpression)
     }
 
     private nextToken() {
@@ -436,7 +458,13 @@ function ParserGeneralTest(scenario, input: string | string[]) {
 //     '!(true == false)'
 // ])
 
-ParserGeneralTest('if-else expressions', [
+// ParserGeneralTest('if-else expressions', [
+//     'if (x < y) { x }',
+//     'if (x < y) { x } else { y }'
+// ])
+
+// extended by me
+ParserGeneralTest('if-else expressions with statement', [
     'if (x < y) { x }',
-    'if (x < y) { x } else { y }'
+    'if (x < y) { x = y == x / 2; } else { x = x + y; y = !foo(x); }'
 ])

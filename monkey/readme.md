@@ -9,3 +9,5 @@ run
 $ tsc
 ```
 to start compilation.
+
+[How to configure prettier?](https://glebbahmutov.com/blog/configure-prettier-in-vscode/)

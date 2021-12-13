@@ -25,6 +25,7 @@ export const FALSE = 'FALSE'
 export const IF = 'IF'
 export const ELSE = 'ELSE'
 export const RETURN = 'RETURN'
+export const WHILE = 'WHILE'
 
 // Operators
 export const ASSIGN = '='

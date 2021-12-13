@@ -7,7 +7,8 @@ const Keywords = {
     false: token.FALSE,
     if: token.IF,
     else: token.ELSE,
-    return: token.RETURN
+    return: token.RETURN,
+    while: token.WHILE
 }
 
 export class Lexer {
