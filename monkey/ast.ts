@@ -1,6 +1,6 @@
 import * as token from './token'
 
-interface Node {
+export interface Node {
     // only for debugging
     tokenLiteral(): string
     string(): string

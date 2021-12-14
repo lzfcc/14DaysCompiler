@@ -3,6 +3,7 @@ import { stdin, stdout } from 'process'
 import * as lexer from './lexer'
 import * as token from './token'
 import Parser from './parser'
+import * as evaluator from './eval'
 
 const PROMPT = '>> '
 
@@ -16,8 +17,10 @@ function Start(input, output) {
             const l = new lexer.Lexer(line)
             const p = new Parser(l)
             const programe = p.parseProgram()
-            console.log(programe)
-            console.log(programe.string())
+            const res = evaluator.Eval(programe)
+            if (res) {
+                console.log(res.inspect())
+            }
             repl()
         })
     }

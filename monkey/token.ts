@@ -1,5 +1,7 @@
 // type TokenType string
 
+import { isObject } from "util"
+
 export type TokenType = string
 
 export const ILLEGAL = 'ILLEGAL'
