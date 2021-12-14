@@ -35,6 +35,16 @@ export const BANG = '!'
 export const ASTERISK = '*'
 export const SLASH = '/'
 
+// extended by me
+export const MODULO = '%'
+export const COMMNET = '#'
+// and more: & | ~ ^ && || ...
+
+// An interesting fact:
+// In Chrome, we cannot evaluate -3**2, an error is thrown: 
+// Uncaught SyntaxError: Unary operator used immediately before exponentiation expression. Parenthesis must be used to disambiguate operator precedence.
+// see: https://stackoverflow.com/questions/43556752/why-is-12-a-syntax-error-in-javascript
+
 export const LT = '<'
 export const GT = '>'
 export const EQ = '=='

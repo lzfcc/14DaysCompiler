@@ -27,11 +27,12 @@ const precedences = {
     [token.MINUS]: OP_ORDER.SUM,
     [token.SLASH]: OP_ORDER.PRODUCT,
     [token.ASTERISK]: OP_ORDER.PRODUCT,
+    [token.MODULO]: OP_ORDER.PRODUCT,
     // add this for function call, a little hard to think
     [token.LPAREN]: OP_ORDER.CALL
 }
 
-class Parser {
+export default class Parser {
     l: lexer.Lexer
     curToken: token.Token
     peekToken: token.Token
@@ -414,7 +415,7 @@ let foobar = 838383;
     }
 }
 
-TestLetStatements()
+// TestLetStatements()
 
 function TestReturnStatement() {
     const input = `

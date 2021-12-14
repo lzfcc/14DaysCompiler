@@ -181,7 +181,7 @@ export class IfExpression implements Expression {
         return this.token.literal
     }
     string(): string {
-        let str = `if ${this.condition.string()} {${this.consequence.string()}}`
+        let str = `if (${this.condition.string()}) {${this.consequence.string()}}`
         if (this.alternative) {
             str += ` else {${this.alternative.string()}}`
         }

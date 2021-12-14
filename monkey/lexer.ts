@@ -88,7 +88,9 @@ export class Lexer {
                 tok = newToken(token.SLASH, this.ch)
                 break
             case '*':
-                tok = newToken(token.ASTERISK, this.ch)
+                    tok = newToken(token.ASTERISK, this.ch)
+            case '%':
+                tok = newToken(token.MODULO, this.ch)
                 break
             case '<':
                 tok = newToken(token.LT, this.ch)
@@ -102,6 +104,8 @@ export class Lexer {
             case ',':
                 tok = newToken(token.COMMA, this.ch)
                 break
+            case '#':
+                // todo
             default:
                 if (isLetter(this.ch)) {
                     let lit = this.readIdentifier()
