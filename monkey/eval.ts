@@ -9,7 +9,7 @@ const NULL = new object.Null()
 
 export function Eval(node: ast.Node): object.MObject {
     if (node instanceof ast.Program) {
-        return evalStatement(node.statements)
+        return evalStatements(node.statements)
     }
     if (node instanceof ast.ExpressionStatement) {
         return Eval(node.expression)
@@ -28,18 +28,28 @@ export function Eval(node: ast.Node): object.MObject {
         if (node.operator === '-') {
             return evalNegativeOperatorExpression(right)
         }
-        return NULL
+        return new object.MError(`unknown operator: ${node.operator} ${right.type()}`)
+        // return NULL
     }
     if (node instanceof ast.InfixExpression) {
         const left = Eval(node.left)
         const right = Eval(node.right)
         return evalInfixExpression(node.operator, left, right)
     }
+    if (node instanceof ast.IfExpression) {
+        return evalIfExpression(node)
+    }
+    if (node instanceof ast.BlockStatement) {
+        return evalStatements(node.statements)
+    }
 
-    function evalStatement(stmts: ast.Statement[]): object.MObject {
+    function evalStatements(stmts: ast.Statement[]): object.MObject {
         let res = null
         for (const stmt of stmts) {
             res = Eval(stmt)
+            if (res instanceof object.MError) {
+                return res
+            }
         }
         return res
     }
@@ -61,8 +71,8 @@ export function Eval(node: ast.Node): object.MObject {
     }
 
     function evalInfixExpression(op: string, left: object.MObject, right: object.MObject): object.MObject {
-        const lval = left.valueOf()
-        const rval = right.valueOf()
+        const lval = left.primitive
+        const rval = right.primitive
         if (op === '<') {
             return nativeBoolToObject(lval < rval)
         }
@@ -90,11 +100,23 @@ export function Eval(node: ast.Node): object.MObject {
         if (op == '%') {
             return new object.Int(lval % rval)
         }
-        return NULL
+        return new object.MError(`unknown operator: ${left.type()} ${op} ${right.type()}`)
+        // return NULL
     }
 
     function nativeBoolToObject(input: boolean): object.Bool {
         return input ? TRUE : FALSE
+    }
+
+    function evalIfExpression(ie: ast.IfExpression): object.MObject {
+        const condition = Eval(ie.condition)
+        if (condition.valueOf()) {
+            return Eval(ie.consequence)
+        } else if (ie.alternative) {
+            return Eval(ie.alternative)
+        } else {
+            return NULL
+        }
     }
 
     return null
@@ -112,4 +134,5 @@ function testEval(input: string): object.MObject {
 // testEval('-!0')
 // testEval('!-1')
 // testEval('3 * true')
-testEval('12 % 5')
+// testEval('12 % 5')
+// testEval('if (5 * 5 + 10 > 34) { 99 } else { 100 }')

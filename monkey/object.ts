@@ -1,8 +1,9 @@
 export abstract class MObject {
     abstract primitive: any
     abstract inspect(): string
-    // extended by me
-    abstract valueOf(): number
+    type() {
+        return this.constructor.name
+    }
 }
 
 export class Int extends MObject {
@@ -13,9 +14,6 @@ export class Int extends MObject {
     }
     inspect(): string {
         return String(this.primitive)
-    }
-    valueOf(): number {
-        return this.primitive
     }
 }
 
@@ -28,9 +26,6 @@ export class Bool extends MObject {
     inspect(): string {
         return String(this.primitive)
     }
-    valueOf(): number {
-        return Number(this.primitive)
-    }
 }
 
 export class Null extends MObject {
@@ -38,7 +33,22 @@ export class Null extends MObject {
     inspect(): string {
         return 'null'
     }
-    valueOf(): number {
-        return 0
+}
+
+export class MError extends MObject {
+    primitive: string
+    constructor(msg: string) {
+        super()
+        this.primitive = msg
+    }
+    inspect(): string {
+        return this.primitive
+    }
+}
+
+export class ReturnValue extends MObject {
+    primitive: MObject
+    inspect(): string {
+        return this.primitive.inspect()
     }
 }
