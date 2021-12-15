@@ -88,7 +88,8 @@ export class Lexer {
                 tok = newToken(token.SLASH, this.ch)
                 break
             case '*':
-                    tok = newToken(token.ASTERISK, this.ch)
+                tok = newToken(token.ASTERISK, this.ch)
+                break
             case '%':
                 tok = newToken(token.MODULO, this.ch)
                 break

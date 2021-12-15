@@ -180,6 +180,7 @@ export default class Parser {
         this.registerInfix(token.NOT_EQ, this.parseInfixExpression)
         this.registerInfix(token.LT, this.parseInfixExpression)
         this.registerInfix(token.GT, this.parseInfixExpression)
+        this.registerInfix(token.MODULO, this.parseInfixExpression)
         // add this for function call expression, a little hard to think
         this.registerInfix(token.LPAREN, this.parseCallExpression)
 

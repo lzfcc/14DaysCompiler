@@ -18,7 +18,7 @@ export function Eval(node: ast.Node): object.MObject {
         return new object.Int(node.value)
     }
     if (node instanceof ast.Bool) {
-        return node.value ? TRUE : FALSE // new object.Bool(node.value)
+        return nativeBoolToObject(node.value) // new object.Bool(node.value)
     }
     if (node instanceof ast.PrefixExpression) {
         const right = Eval(node.right)
@@ -29,6 +29,11 @@ export function Eval(node: ast.Node): object.MObject {
             return evalNegativeOperatorExpression(right)
         }
         return NULL
+    }
+    if (node instanceof ast.InfixExpression) {
+        const left = Eval(node.left)
+        const right = Eval(node.right)
+        return evalInfixExpression(node.operator, left, right)
     }
 
     function evalStatement(stmts: ast.Statement[]): object.MObject {
@@ -41,7 +46,7 @@ export function Eval(node: ast.Node): object.MObject {
 
     function evalBangOperatorExpression(expr: object.MObject): object.MObject {
         if (expr instanceof object.Int) {
-            return (expr as object.Int).value ? FALSE : TRUE
+            return (expr as object.Int).primitive ? FALSE : TRUE
         } else if (expr === FALSE || expr === NULL) {
             return TRUE
         } else {
@@ -51,8 +56,45 @@ export function Eval(node: ast.Node): object.MObject {
 
     function evalNegativeOperatorExpression(expr: object.MObject): object.MObject {
         if (expr !== NULL) {
-            return new object.Int(-expr.value)
+            return new object.Int(-expr.primitive)
         }
+    }
+
+    function evalInfixExpression(op: string, left: object.MObject, right: object.MObject): object.MObject {
+        const lval = left.valueOf()
+        const rval = right.valueOf()
+        if (op === '<') {
+            return nativeBoolToObject(lval < rval)
+        }
+        if (op === '>') {
+            return nativeBoolToObject(lval > rval)
+        }
+        if (op === '==') {
+            return nativeBoolToObject(lval == rval)
+        }
+        if (op === '!=') {
+            return nativeBoolToObject(lval != rval)
+        }
+        if (op === '+') {
+            return new object.Int(lval + rval)
+        }
+        if (op === '-') {
+            return new object.Int(lval - rval)
+        }
+        if (op === '*') {
+            return new object.Int(lval * rval)
+        }
+        if (op === '/') {
+            return new object.Int(Math.floor(lval / rval))
+        }
+        if (op == '%') {
+            return new object.Int(lval % rval)
+        }
+        return NULL
+    }
+
+    function nativeBoolToObject(input: boolean): object.Bool {
+        return input ? TRUE : FALSE
     }
 
     return null
@@ -67,7 +109,7 @@ function testEval(input: string): object.MObject {
 }
 
 // testEval('5')
-
-// No, this is not supported!
-testEval('-!0')
-testEval('!-1')
+// testEval('-!0')
+// testEval('!-1')
+// testEval('3 * true')
+testEval('12 % 5')
