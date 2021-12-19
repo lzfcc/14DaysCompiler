@@ -48,7 +48,21 @@ export class MError extends MObject {
 
 export class ReturnValue extends MObject {
     primitive: MObject
+    constructor(val: MObject) {
+        super()
+        this.primitive = val
+    }
     inspect(): string {
         return this.primitive.inspect()
+    }
+}
+
+export class Environment {
+    store: { [key: string]: MObject } = {}
+    get(name: string) {
+        return this.store[name]
+    }
+    set(name: string, val: MObject) {
+        this.store[name] = val
     }
 }
