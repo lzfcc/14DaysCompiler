@@ -1,5 +1,7 @@
+import * as ast from './ast'
+
 export abstract class MObject {
-    abstract primitive: any
+    primitive?: any
     abstract inspect(): string
     type() {
         return this.constructor.name
@@ -57,12 +59,45 @@ export class ReturnValue extends MObject {
     }
 }
 
+export class MFunction extends MObject {
+    inspect(): string {
+        const params = []
+        for (const p of this.parameters) {
+            params.push(p.string())
+        }
+        return `fn("${params.join(', ')}
+            ${this.body.string()}
+        }`
+    }
+    parameters: ast.Identifier[]
+    body: ast.BlockStatement
+    env: Environment
+    constructor(params: ast.Identifier[], body: ast.BlockStatement, env: Environment) {
+        super()
+        this.parameters = params
+        this.body = body
+        this.env = env
+    }
+}
+
 export class Environment {
     store: { [key: string]: MObject } = {}
-    get(name: string) {
-        return this.store[name]
+    outer: Environment = null
+    get(name: string): MObject {
+        // return this.store[name]
+        let obj = this.store[name]
+        if (obj === undefined && this.outer) {
+            obj = this.outer.get(name)
+        }
+        return obj
     }
     set(name: string, val: MObject) {
         this.store[name] = val
+    }
+
+    static EnclosedEnvironment(outer: Environment): Environment {
+        const env = new Environment()
+        env.outer = outer
+        return env
     }
 }

@@ -1,7 +1,6 @@
 import * as readline from 'readline'
 import { stdin, stdout } from 'process'
 import * as lexer from './lexer'
-import * as token from './token'
 import Parser from './parser'
 import * as evaluator from './eval'
 import * as object from './object'

@@ -62,6 +62,35 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
     if (node instanceof ast.Identifier) {
         return evalIdentifier(node, env)
     }
+    if (node instanceof ast.FunctionLiteral) {
+        const params = node.parameters
+        const body = node.body
+        return new object.MFunction(params, body, env)
+    }
+    if (node instanceof ast.CallExpression) {
+        const func = Eval((node as ast.CallExpression).func, env)
+        if (func instanceof object.MError) {
+            return func
+        }
+        const args = evalExpressions((node as ast.CallExpression).args, env)
+        if (args[0] instanceof object.MError) {
+            return args[0]
+        }
+
+        if (!(func instanceof object.MFunction)) {
+            return new object.MError(`not a function`)
+        }
+
+        const extendedEnv = object.Environment.EnclosedEnvironment(func.env)
+        func.parameters.forEach((param, index) => {
+            extendedEnv.set(param.value, args[index])
+        })
+        const evaluated = Eval((func as object.MFunction).body, extendedEnv)
+
+        if (evaluated instanceof object.ReturnValue) {
+            return evaluated.primitive
+        }
+    }
 
     function evalStatements(stmts: ast.Statement[]): object.MObject {
         let res = null
@@ -193,6 +222,18 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
         return val
     }
 
+    function evalExpressions(exps: ast.Expression[], env: object.Environment): object.MObject[] {
+        let result = [] as object.MObject[]
+        for (const exp of exps) {
+            const evaluated = Eval(exp, env)
+            if (evaluated instanceof object.MError) {
+                return [evaluated]
+            }
+            result.push(evaluated)
+        }
+        return result
+    }
+
     return null
 }
 
@@ -212,4 +253,5 @@ function testEval(input: string): object.MObject {
 // testEval('12 % 5')
 // testEval('if (5 * 5 + 10 > 34) { 99 } else { 100 }')
 // testEval('let a = 5; let b = 2 * a; a = a + b; return a + b')
-testEval('let a = 5; let b = 2 * a; let c = a;')
+// testEval('let a = 5; let b = 2 * a; let c = a;')
+testEval('let add = fn(a, b) { a + b };let sub = fn(a, b) { a - b };let applyFunc = fn(a, b, func) { func(a, b) };applyFunc(2, 3, add);applyFunc(2, 3, sub);')
