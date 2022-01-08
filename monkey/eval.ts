@@ -9,7 +9,7 @@ const NULL = new object.Null()
 
 export function Eval(node: ast.Node, env: object.Environment): object.MObject {
     if (node instanceof ast.Program) {
-        return evalStatements(node.statements)
+        return evalProgram(node)
     }
     if (node instanceof ast.ExpressionStatement) {
         return Eval(node.expression, env)
@@ -50,7 +50,7 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
         return evalIfExpression(node, env)
     }
     if (node instanceof ast.BlockStatement) {
-        return evalStatements(node.statements)
+        return evalBlockStatement(node)
     }
     if (node instanceof ast.ReturnStatement) {
         const val = Eval(node.returnValue, env)
@@ -76,20 +76,21 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
         if (args[0] instanceof object.MError) {
             return args[0]
         }
+        return applyFunction(func, args)
+    }
 
-        if (!(func instanceof object.MFunction)) {
-            return new object.MError(`not a function`)
+    function evalProgram(program: ast.Program) {
+        let res: object.MObject
+        for (const stmt of program.statements) {
+            res = Eval(stmt, env)
+            if (res instanceof object.MError) {
+                return res
+            }
+            if (res instanceof object.ReturnValue) {
+                return res.primitive
+            }
         }
-
-        const extendedEnv = object.Environment.EnclosedEnvironment(func.env)
-        func.parameters.forEach((param, index) => {
-            extendedEnv.set(param.value, args[index])
-        })
-        const evaluated = Eval((func as object.MFunction).body, extendedEnv)
-
-        if (evaluated instanceof object.ReturnValue) {
-            return evaluated.primitive
-        }
+        return res
     }
 
     function evalStatements(stmts: ast.Statement[]): object.MObject {
@@ -101,6 +102,20 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
             }
             if (res instanceof object.ReturnValue) {
                 return res.primitive
+            }
+        }
+        return res
+    }
+
+    function evalBlockStatement(block: ast.BlockStatement): object.MObject {
+        let res: object.MObject
+        for (const stmt of block.statements) {
+            res = Eval(stmt, env)
+            if (res instanceof object.MError) {
+                return res
+            }
+            if (res instanceof object.ReturnValue) { // We do not unwrap ReturnValue! see 3.7
+                return res
             }
         }
         return res
@@ -234,6 +249,25 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
         return result
     }
 
+    function applyFunction(func: object.MObject, args: object.MObject[]) {
+        if (!(func instanceof object.MFunction)) {
+            return new object.MError(`not a function`)
+        }
+        const extendedEnv = object.Environment.EnclosedEnvironment(func.env)
+        func.parameters.forEach((param, index) => {
+            extendedEnv.set(param.value, args[index])
+        })
+        const evaluated = Eval((func as object.MFunction).body, extendedEnv)
+        return unwrapReturnValue(evaluated)
+    }
+
+    function unwrapReturnValue(obj: object.MObject): object.MObject {
+        if (obj instanceof object.ReturnValue) {
+            return obj.primitive
+        }
+        return obj
+    }
+
     return null
 }
 
@@ -254,4 +288,5 @@ function testEval(input: string): object.MObject {
 // testEval('if (5 * 5 + 10 > 34) { 99 } else { 100 }')
 // testEval('let a = 5; let b = 2 * a; a = a + b; return a + b')
 // testEval('let a = 5; let b = 2 * a; let c = a;')
+testEval('let add = fn(a, b) { a + b }; add(2, 3);')
 testEval('let add = fn(a, b) { a + b };let sub = fn(a, b) { a - b };let applyFunc = fn(a, b, func) { func(a, b) };applyFunc(2, 3, add);applyFunc(2, 3, sub);')
