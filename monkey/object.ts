@@ -1,7 +1,7 @@
 import * as ast from './ast'
 
 export abstract class MObject {
-    primitive?: any
+    primitive: any
     abstract inspect(): string
     type() {
         return this.constructor.name
@@ -69,6 +69,7 @@ export class MFunction extends MObject {
             ${this.body.string()}
         }`
     }
+    primitive = null
     parameters: ast.Identifier[]
     body: ast.BlockStatement
     env: Environment
