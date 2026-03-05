@@ -4,12 +4,16 @@
   "description": "",
   "main": "Parser.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "repl": "tsx monkey/repl.ts",
+    "test:lexer": "tsx monkey/lexer.test.ts",
+    "test:parser": "tsx monkey/parser.test.ts",
+    "test:eval": "tsx monkey/eval.test.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^15.14.9",
+    "tsx": "^4.19.2",
     "typescript": "^4.5.2"
   }
 }

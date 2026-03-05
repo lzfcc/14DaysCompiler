@@ -283,24 +283,3 @@ export function Eval(node: ast.Node, env: object.Environment): object.MObject {
     }
     return null
 }
-
-function testEval(input: string): object.MObject {
-    const l = new lexer.Lexer(input)
-    const p = new Parser(l)
-    const program = p.parseProgram()
-    const env = new object.Environment()
-
-    return Eval(program, env)
-}
-
-// testEval('5')
-// testEval('-!0')
-// testEval('!-1')
-// testEval('3 * true')
-// testEval('12 % 5')
-// testEval('if (5 * 5 + 10 > 34) { 99 } else { 100 }')
-// testEval('let a = 5; let b = 2 * a; a = a + b; return a + b')
-// testEval('let a = 5; let b = 2 * a; let c = a;')
-// testEval('let add = fn(a, b) { a + b }; add(2, 3);')
-// testEval('let add = fn(a, b) { a + b };let sub = fn(a, b) { a - b };let applyFunc = fn(a, b, func) { func(a, b) };applyFunc(2, 3, add);applyFunc(2, 3, sub);')
-testEval('let a = 5; let b = 2 * a; while(a < b) {a = a + 1;}')

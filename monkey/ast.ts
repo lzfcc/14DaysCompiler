@@ -240,7 +240,7 @@ export class FunctionLiteral implements Expression {
 
 export class CallExpression implements Expression {
     token: token.Token // '('
-    func: Expression // Identifer or FunctionLiteral
+    func: Expression // Identifier or FunctionLiteral
     args: Expression[]
     constructor(token: token.Token, func: Expression) {
         this.token = token

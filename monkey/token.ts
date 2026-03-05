@@ -1,7 +1,5 @@
 // type TokenType string
 
-import { isObject } from "util"
-
 export type TokenType = string
 
 export const ILLEGAL = 'ILLEGAL'
@@ -37,25 +35,36 @@ export const BANG = '!'
 export const ASTERISK = '*'
 export const SLASH = '/'
 
-// extended by me
-export const MODULO = '%'
-export const COMMNET = '#'
-// and more: & | ~ ^ && || ...
-
-// An interesting fact:
-// In Chrome, we cannot evaluate -3**2, an error is thrown: 
-// Uncaught SyntaxError: Unary operator used immediately before exponentiation expression. Parenthesis must be used to disambiguate operator precedence.
-// see: https://stackoverflow.com/questions/43556752/why-is-12-a-syntax-error-in-javascript
-
 export const LT = '<'
 export const GT = '>'
 export const EQ = '=='
 export const NOT_EQ = '!='
 
+// extended by me
+export const MODULO = '%'
+export const COMMENT = '#'
+
+// Bitwise operators
+export const AMPERSAND = '&'  // bitwise AND
+export const PIPE = '|'       // bitwise OR
+export const CARET = '^'      // bitwise XOR
+export const TILDE = '~'      // bitwise NOT (unary)
+
+// Logical operators (short-circuit)
+export const AND = '&&'
+export const OR = '||'
+
+// Exponentiation
+// Note: In JavaScript -3**2 is a syntax error (use (-3)**2 instead).
+// We follow the same rule: ** binds tighter than unary minus.
+// see: https://stackoverflow.com/questions/43556752/why-is-12-a-syntax-error-in-javascript
+export const POWER = '**'
+
+
 export class Token {
     type: TokenType
     literal: string
-    constructor (type, literal) {
+    constructor(type: TokenType, literal: string) {
         this.type = type
         this.literal = literal
     }

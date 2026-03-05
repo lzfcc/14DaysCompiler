@@ -46,36 +46,6 @@ export class Lexer {
                     tok = newToken(token.ASSIGN, this.ch)
                 }
                 break
-            case ';':
-                tok = newToken(token.SEMICOLON, this.ch)
-                break
-            case '(':
-                tok = newToken(token.LPAREN, this.ch)
-                break
-            case ')':
-                tok = newToken(token.RPAREN, this.ch)
-                break
-            case ',':
-                tok = newToken(token.COMMA, this.ch)
-                break
-            case '+':
-                tok = newToken(token.PLUS, this.ch)
-                break
-            case '{':
-                tok = newToken(token.LBRACE, this.ch)
-                break
-            case '}':
-                tok = newToken(token.RBRACE, this.ch)
-                break
-            case '\0':
-                tok = newToken(token.EOF, this.ch)
-                break
-            case '+':
-                tok = newToken(token.PLUS, this.ch)
-                break
-            case '-':
-                tok = newToken(token.MINUS, this.ch)
-                break
             case '!':
                 if (this.peekChar() === '=') {
                     this.readChar()
@@ -84,11 +54,50 @@ export class Lexer {
                     tok = newToken(token.BANG, this.ch)
                 }
                 break
+            case '*':
+                if (this.peekChar() === '*') {
+                    this.readChar()
+                    tok = newToken(token.POWER, '**')
+                } else {
+                    tok = newToken(token.ASTERISK, this.ch)
+                }
+                break
+            case '&':
+                if (this.peekChar() === '&') {
+                    this.readChar()
+                    tok = newToken(token.AND, '&&')
+                } else {
+                    tok = newToken(token.AMPERSAND, this.ch)
+                }
+                break
+            case '|':
+                if (this.peekChar() === '|') {
+                    this.readChar()
+                    tok = newToken(token.OR, '||')
+                } else {
+                    tok = newToken(token.PIPE, this.ch)
+                }
+                break
+            case '^':
+                tok = newToken(token.CARET, this.ch)
+                break
+            case '~':
+                tok = newToken(token.TILDE, this.ch)
+                break
+            case ';':
+                tok = newToken(token.SEMICOLON, this.ch)
+                break
+            case ',':
+                tok = newToken(token.COMMA, this.ch)
+                break
+            case '+':
+                tok = newToken(token.PLUS, this.ch)
+                break
+            case '-':
+                tok = newToken(token.MINUS, this.ch)
+                break
             case '/':
                 tok = newToken(token.SLASH, this.ch)
-                break
-            case '*':
-                tok = newToken(token.ASTERISK, this.ch)
                 break
             case '%':
                 tok = newToken(token.MODULO, this.ch)
@@ -99,11 +108,20 @@ export class Lexer {
             case '>':
                 tok = newToken(token.GT, this.ch)
                 break
-            case ';':
-                tok = newToken(token.SEMICOLON, this.ch)
+            case '(':
+                tok = newToken(token.LPAREN, this.ch)
                 break
-            case ',':
-                tok = newToken(token.COMMA, this.ch)
+            case ')':
+                tok = newToken(token.RPAREN, this.ch)
+                break
+            case '{':
+                tok = newToken(token.LBRACE, this.ch)
+                break
+            case '}':
+                tok = newToken(token.RBRACE, this.ch)
+                break
+            case '\0':
+                tok = newToken(token.EOF, this.ch)
                 break
             case '#':
                 // todo
@@ -170,35 +188,3 @@ function isLetter(ch) {
 function isDigit(ch) {
     return /\d/.test(ch)
 }
-
-function testNextToken() {
-    const input = `let five = 5;
-let ten = 10;
-
-let add = fn(x, y) {
-  x + y;
-};
-
-let result = add(five, ten);
-!-/*5;
-5 < 10 > 5;
-
-if (5 < 10) {
-    return true;
-} else {
-    return flase;
-}
-
-10 == 10;
-10 != 9;
-`
-    const l = new Lexer(input)
-
-    let tok: token.Token = null
-    do {
-        tok = l.nextToken()
-        console.log(tok)
-    } while (tok.type != token.EOF)
-}
-
-// testNextToken()
