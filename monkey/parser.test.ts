@@ -1,12 +1,24 @@
 import * as lexer from './lexer'
 import Parser from './parser'
 import * as ast from './ast'
+import { printAST } from './ast-printer'
+
+const PRINT_AST = process.env.PRINT_AST === '1'
+
+/**
+ * # 普通运行，只打印 string()
+npx tsx monkey/parser.test.ts
+
+# 开启 AST 树输出
+PRINT_AST=1 npx tsx monkey/parser.test.ts
+ */
+
 
 function TestLetStatements() {
     const input = `
 let x = 5;
 let y = 10;
-let foobar = 838383;
+let foobar = -883;
 `
     const l = new lexer.Lexer(input)
     const p = new Parser(l)
@@ -93,8 +105,8 @@ function ParserGeneralTest(scenario, input: string | string[]) {
         const program = p.parseProgram()
 
         console.log(`scenario: ${scenario}`)
-        console.log(program)
         console.log(program.string())
+        if (PRINT_AST) printAST(program)
     }
 
     if (Array.isArray(input)) {
@@ -172,3 +184,50 @@ ParserGeneralTest('call function', [
     'foo(a * 4, 1, 5 - bar(3))',
     'a + mul(a * b) / c'
 ])
+
+ParserGeneralTest('group expression', [
+    '(5 + 5) * 2',
+    '((a > b))',
+])
+
+
+function TestOperatorPrecedenceParsing() {
+    const tests: [string, string][] = [
+        ['-a * b',                          '((-a) * b)'],
+        ['!-a',                             '(!(-a))'],
+        ['a + b + c',                       '((a + b) + c)'],
+        ['a + b / c',                       '(a + (b / c))'],
+        ['a + b * c + d / e - f',           '(((a + (b * c)) + (d / e)) - f)'],
+        ['3 + 4; -5 * 5',                  '(3 + 4)((-5) * 5)'],
+        // grouping with parentheses overrides default precedence
+        ['(a + b) * c',                     '((a + b) * c)'],
+        ['a * (b + c)',                      '(a * (b + c))'],
+        ['(a + b) / (c - d)',               '((a + b) / (c - d))'],
+        ['-(a + b)',                         '(-(a + b))'],
+        ['!(a != b)',                        '(!(a != b))'],
+        ['5 > 4 == 3 < 4',                 '((5 > 4) == (3 < 4))'],
+        ['3 + 4 * 5 == 3 / 1 + 4 * 5',    '((3 + (4 * 5)) == ((3 / 1) + (4 * 5)))'],
+    ]
+
+    let pass = true
+    for (const [input, expected] of tests) {
+        const p = new Parser(new lexer.Lexer(input))
+        const program = p.parseProgram()
+        if (PRINT_AST) printAST(program)
+
+        if (p.errors.length > 0) {
+            console.error(`parser errors for "${input}":`, p.errors)
+            pass = false
+            continue
+        }
+
+        const actual = program.string()
+        if (actual !== expected) {
+            console.error(`FAIL "${input}": expected "${expected}", got "${actual}"`)
+            pass = false
+        }
+    }
+    if (pass) console.log('TestOperatorPrecedenceParsing: all passed')
+}
+
+TestOperatorPrecedenceParsing()

@@ -164,6 +164,7 @@ export class Lexer {
         }
     }
 
+    // it only supports integers now, not floats, not octals, not hexadecimals, not scientific notation, etc.
     private readNumber(): string {
         let position = this.position
         while (isDigit(this.ch)) {
@@ -173,18 +174,18 @@ export class Lexer {
     }
 }
 
-function newToken(type, literal) {
+function newToken(type: token.TokenType, literal: string): token.Token {
     return new token.Token(type, literal)
 }
 
-function LookupIdent(ident) {
+function LookupIdent(ident: string): token.TokenType {
     return Keywords[ident] || token.IDENT
 }
 
-function isLetter(ch) {
+function isLetter(ch: string): boolean {
     return /[a-zA-Z_]/.test(ch)
 }
 
-function isDigit(ch) {
+function isDigit(ch: string): boolean {
     return /\d/.test(ch)
 }

@@ -36,25 +36,69 @@ export default class Parser {
     l: lexer.Lexer
     curToken: token.Token
     peekToken: token.Token
+    errors: string[] = []
 
     prefixParseFns: { [token: token.TokenType]: PrefixParseFn } = {}
     infixParseFns: { [token: token.TokenType]: InfixParseFn } = {}
 
-    // use arrow function to avoid JS "this" problem!
-    private parseIdentifier = () => {
+    constructor(l: lexer.Lexer) {
+        this.l = l
+        this.nextToken()
+        this.nextToken()
+        this.registerParseFns()
+    }
+
+    private registerParseFns() {
+        // prefix
+        this.registerPrefix(token.IDENT, this.parseIdentifier.bind(this))
+        this.registerPrefix(token.INT, this.parseIntegerLiteral.bind(this))
+        this.registerPrefix(token.BANG, this.parsePrefixExpression.bind(this))
+        this.registerPrefix(token.MINUS, this.parsePrefixExpression.bind(this))
+        this.registerPrefix(token.TRUE, this.parseBool.bind(this))
+        this.registerPrefix(token.FALSE, this.parseBool.bind(this))
+        this.registerPrefix(
+            token.LPAREN,
+            this.parseGroupedExpression.bind(this)
+        )
+        this.registerPrefix(token.IF, this.parseIfExpression.bind(this))
+        this.registerPrefix(token.WHILE, this.parseWhileExpression.bind(this))
+        this.registerPrefix(
+            token.FUNCTION,
+            this.parseFunctionLiteral.bind(this)
+        )
+
+        // infix
+        this.registerInfix(token.PLUS, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.MINUS, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.SLASH, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.ASTERISK, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.MODULO, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.EQ, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.NOT_EQ, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.LT, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.GT, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.ASSIGN, this.parseInfixExpression.bind(this))
+        this.registerInfix(token.LPAREN, this.parseCallExpression.bind(this))
+
+        // No suffix parse fn for now
+    }
+
+    private parseIdentifier() {
         return new ast.Identifier(this.curToken, this.curToken.literal)
     }
-    private parseIntegerLiteral = () => {
+
+    private parseIntegerLiteral() {
         const val = Number(this.curToken.literal)
-        const lit = new ast.IntegerLiteral(this.curToken, val)
-        // if (Number.isNaN(val)) {
-        //     msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
-        //     p.errors = append(p.errors, msg)
-        //     return nil
-        // }
-        return lit
+        if (Number.isNaN(val)) {
+            this.errors.push(
+                `could not parse ${this.curToken.literal} as integer`
+            )
+            return null
+        }
+        return new ast.IntegerLiteral(this.curToken, val)
     }
-    private parsePrefixExpression = () => {
+
+    private parsePrefixExpression() {
         const expr = new ast.PrefixExpression(
             this.curToken,
             this.curToken.literal
@@ -63,25 +107,33 @@ export default class Parser {
         expr.right = this.parseExpression(OP_ORDER.PREFIX)
         return expr
     }
-    private parseInfixExpression = (left: ast.Expression) => {
-        const expr = new ast.InfixExpression(this.curToken, this.curToken.literal, left)
+
+    private parseInfixExpression(left: ast.Expression) {
+        const expr = new ast.InfixExpression(
+            this.curToken,
+            this.curToken.literal,
+            left
+        )
         const prec = this.curPrecedence()
         this.nextToken()
         expr.right = this.parseExpression(prec)
         return expr
     }
-    private parseBool = () => {
+
+    private parseBool() {
         return new ast.Bool(this.curToken, this.curTokenIs(token.TRUE))
     }
-    private parseGroupedExpression = () => {
+
+    private parseGroupedExpression() {
         this.nextToken()
-        const expr = this.parseExpression(OP_ORDER.LOWEST) // !!: OP_ORDER.LOWEST, compared: parseInfixExpression
+        const expr = this.parseExpression(OP_ORDER.LOWEST)
         if (!this.expectPeek(token.RPAREN)) {
             return null
         }
         return expr
     }
-    private parseIfExpression = () => {
+
+    private parseIfExpression() {
         const expr = new ast.IfExpression(this.curToken)
         if (!this.expectPeek(token.LPAREN)) {
             return null
@@ -103,10 +155,10 @@ export default class Parser {
             }
             expr.alternative = this.parseBlockStatement()
         }
-
         return expr
     }
-    private parseWhileExpression = () => {
+
+    private parseWhileExpression() {
         const expr = new ast.WhileExpression(this.curToken)
         if (!this.expectPeek(token.LPAREN)) {
             return null
@@ -122,7 +174,8 @@ export default class Parser {
         expr.body = this.parseBlockStatement()
         return expr
     }
-    private parseFunctionLiteral = () => {
+
+    private parseFunctionLiteral() {
         const lit = new ast.FunctionLiteral(this.curToken)
         if (!this.expectPeek(token.LPAREN)) {
             return null
@@ -134,12 +187,14 @@ export default class Parser {
         lit.body = this.parseBlockStatement()
         return lit
     }
-    private parseCallExpression = (func: ast.Expression) => {
+
+    private parseCallExpression(func: ast.Expression) {
         const expr = new ast.CallExpression(this.curToken, func)
         expr.args = this.parseCallArguments()
         return expr
     }
-    private parseCallArguments = () => {
+
+    private parseCallArguments() {
         const args: ast.Expression[] = []
         if (this.peekTokenIs(token.RPAREN)) {
             this.nextToken()
@@ -156,44 +211,6 @@ export default class Parser {
             return null
         }
         return args
-    }
-
-    constructor(l: lexer.Lexer) {
-        this.l = l
-
-        // Read two tokens, so curToken and peekToken are both set
-        this.nextToken()
-        this.nextToken()
-
-        // prefix expressions
-        this.registerPrefix(token.IDENT, this.parseIdentifier)
-        this.registerPrefix(token.INT, this.parseIntegerLiteral)
-        this.registerPrefix(token.BANG, this.parsePrefixExpression)
-        this.registerPrefix(token.MINUS, this.parsePrefixExpression)
-
-        // infix expressions
-        this.registerInfix(token.PLUS, this.parseInfixExpression)
-        this.registerInfix(token.MINUS, this.parseInfixExpression) // '-' can also be in an infix expression
-        this.registerInfix(token.SLASH, this.parseInfixExpression)
-        this.registerInfix(token.ASTERISK, this.parseInfixExpression)
-        this.registerInfix(token.EQ, this.parseInfixExpression)
-        this.registerInfix(token.NOT_EQ, this.parseInfixExpression)
-        this.registerInfix(token.LT, this.parseInfixExpression)
-        this.registerInfix(token.GT, this.parseInfixExpression)
-        this.registerInfix(token.MODULO, this.parseInfixExpression)
-        // add this for function call expression, a little hard to think
-        this.registerInfix(token.LPAREN, this.parseCallExpression)
-
-        // maybe we need an assign statement?
-        this.registerInfix(token.ASSIGN, this.parseInfixExpression)
-
-        this.registerPrefix(token.TRUE, this.parseBool)
-        this.registerPrefix(token.FALSE, this.parseBool)
-
-        this.registerPrefix(token.LPAREN, this.parseGroupedExpression)
-        this.registerPrefix(token.IF, this.parseIfExpression)
-        this.registerPrefix(token.WHILE, this.parseWhileExpression)
-        this.registerPrefix(token.FUNCTION, this.parseFunctionLiteral)
     }
 
     private nextToken() {
@@ -264,10 +281,9 @@ export default class Parser {
         return stmt
     }
 
-    // func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-    //     msg := fmt.Sprintf("no prefix parse function for %s found", t)
-    //     p.errors = append(p.errors, msg)
-    // }
+    private noPrefixParseFnError(t: token.TokenType) {
+        this.errors.push(`no prefix parse function for ${t} found`)
+    }
 
     /**
      * This is the core of Parser
@@ -277,13 +293,16 @@ export default class Parser {
     private parseExpression(precedence: OP_ORDER): ast.Expression {
         const prefix = this.prefixParseFns[this.curToken.type]
         if (!prefix) {
-            // p.noPrefixParseFnError(p.curToken.Type)
+            this.noPrefixParseFnError(this.curToken.type)
             return null
         }
 
         let leftExpr = prefix()
 
-        while (!this.peekTokenIs(token.SEMICOLON) && precedence < this.peekPrecedence()) {
+        while (
+            !this.peekTokenIs(token.SEMICOLON) &&
+            precedence < this.peekPrecedence()
+        ) {
             const infix = this.infixParseFns[this.peekToken.type]
             if (!infix) {
                 return leftExpr
@@ -336,11 +355,17 @@ export default class Parser {
         return this.peekToken.type == t
     }
 
+    private peekError(t: token.TokenType) {
+        const msg = `expected next token to be ${t}, got ${this.peekToken.type} instead`
+        this.errors.push(msg)
+    }
+
     private expectPeek(t: token.TokenType): boolean {
         if (this.peekTokenIs(t)) {
             this.nextToken()
             return true
         } else {
+            this.peekError(t)
             return false
         }
     }

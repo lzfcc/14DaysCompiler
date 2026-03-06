@@ -6,20 +6,21 @@ export interface Node {
     string(): string
 }
 
-// a statment doesn't generate a value
+// a statement doesn't generate a value
 export interface Statement extends Node {
     statementNode()
 }
 
-// an express generates a value
+// an expression generates a value
 export interface Expression extends Node {
     expressionNode()
 }
 
+// the root node of every AST
 export class Program implements Statement {
     statementNode() {}
     string(): string {
-        return this.statements.map((stmt) => stmt.string()).join()
+        return this.statements.map((stmt) => stmt.string()).join('')
     }
     statements: Statement[] = []
     tokenLiteral() {
@@ -85,15 +86,14 @@ export class ReturnStatement implements Statement {
 }
 
 export class ExpressionStatement implements Statement {
-    token: token.Token // the first token of the expression
     expression: Expression
-    constructor(token: token.Token, expr: Expression) {
-        this.token = token
+    // _token is only for interface consistency, it is not used in this class
+    constructor(_token: token.Token, expr: Expression) {
         this.expression = expr
     }
     statementNode() {}
     tokenLiteral(): string {
-        return this.token.literal
+        return this.expression?.tokenLiteral() ?? ''
     }
     string(): string {
         return `${this.expression.string()}`
@@ -148,7 +148,7 @@ export class InfixExpression implements Expression {
         return this.token.literal
     }
     string(): string {
-        return `(${this.left.string()}${this.operator}${this.right.string()})`
+        return `(${this.left.string()} ${this.operator} ${this.right.string()})`
     }
 }
 
